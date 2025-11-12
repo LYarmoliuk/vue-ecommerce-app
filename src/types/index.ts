@@ -43,3 +43,11 @@ export interface Pagination {
   totalItems: number;
   totalPages: number;
 }
+
+// Тип для товару в кошику
+export interface CartItem {
+  product: Product;
+  quantity: number;
+  selectedSize?: string;
+  selectedColor?: string;
+}
