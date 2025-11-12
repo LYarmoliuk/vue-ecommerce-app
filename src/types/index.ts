@@ -10,8 +10,8 @@ export interface Product {
     rate: number;
     count: number;
   };
-  size?: string; // Розмір для одягу
-  color?: string; // Колір
+  size?: string;
+  color?: string;
   inStock: boolean;
 }
 
@@ -34,4 +34,12 @@ export interface ProductFilters {
   colors?: string[];
   sortBy?: 'price' | 'rating' | 'name';
   sortOrder?: 'asc' | 'desc';
+}
+
+// Тип для пагінації
+export interface Pagination {
+  currentPage: number;
+  itemsPerPage: number;
+  totalItems: number;
+  totalPages: number;
 }

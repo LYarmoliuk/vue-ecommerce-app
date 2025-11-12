@@ -1,17 +1,25 @@
 import api from './config';
 import type { Category } from '@/types';
 
-// Отримати всі категорії
+// Отримати всі категорії одягу
 export const getCategories = async (): Promise<Category[]> => {
   try {
     const response = await api.get<string[]>('/products/categories');
 
-    // Конвертуємо строки в об'єкти Category
-    return response.data.map((category, index) => ({
-      id: index + 1,
-      name: category,
-      description: `Products in ${category} category`
-    }));
+    // Конвертуємо строки в об'єкти Category для одягу
+    const clothingCategories = response.data
+      .filter(category =>
+        category.includes('clothing') ||
+        category.includes('jewelery') ||
+        category.includes('shoes')
+      )
+      .map((category, index) => ({
+        id: index + 1,
+        name: category.charAt(0).toUpperCase() + category.slice(1),
+        description: `Browse our ${category} collection`
+      }));
+
+    return clothingCategories;
   } catch (error) {
     console.error('Error fetching categories:', error);
     throw error;

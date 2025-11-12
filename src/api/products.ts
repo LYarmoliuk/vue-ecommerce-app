@@ -47,9 +47,9 @@ export const getProductsByCategory = async (category: string): Promise<Product[]
 };
 
 // Отримати обмежену кількість товарів (для пагінації)
-export const getLimitedProducts = async (limit: number = 10): Promise<Product[]> => {
+export const getLimitedProducts = async (limit: number = 10, offset: number = 0): Promise<Product[]> => {
   try {
-    const response = await api.get<Product[]>(`/products?limit=${limit}`);
+    const response = await api.get<Product[]>(`/products?limit=${limit}&offset=${offset}`);
     return response.data;
   } catch (error) {
     console.error('Error fetching limited products:', error);
