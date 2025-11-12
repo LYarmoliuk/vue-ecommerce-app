@@ -13,6 +13,8 @@ export interface Product {
   size?: string;
   color?: string;
   inStock: boolean;
+  brand?: string;
+  material?: string;
 }
 
 // Тип категорії
@@ -34,6 +36,7 @@ export interface ProductFilters {
   colors?: string[];
   sortBy?: 'price' | 'rating' | 'name';
   sortOrder?: 'asc' | 'desc';
+  searchQuery?: string;
 }
 
 // Тип для пагінації

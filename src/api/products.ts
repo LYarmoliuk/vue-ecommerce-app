@@ -1,23 +1,43 @@
-import api from './config';
 import type { Product, ProductFilters } from '@/types';
+import { mockClothingProducts } from './mockData';
 
-// Отримати всі товари
+// Тимчасово використовуємо фейкові дані (api не використовується)
 export const getProducts = async (filters?: ProductFilters): Promise<Product[]> => {
   try {
-    const params = new URLSearchParams();
+    // Імітуємо затримку мережі
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        let filteredProducts = [...mockClothingProducts];
 
-    if (filters?.category) {
-      params.append('category', filters.category);
-    }
-    if (filters?.minPrice) {
-      params.append('minPrice', filters.minPrice.toString());
-    }
-    if (filters?.maxPrice) {
-      params.append('maxPrice', filters.maxPrice.toString());
-    }
+        // Застосовуємо фільтри
+        if (filters?.category) {
+          filteredProducts = filteredProducts.filter(
+            product => product.category === filters.category
+          );
+        }
 
-    const response = await api.get<Product[]>(`/products?${params.toString()}`);
-    return response.data;
+        if (filters?.minPrice !== undefined) {
+          filteredProducts = filteredProducts.filter(
+            product => product.price >= filters.minPrice!
+          );
+        }
+
+        if (filters?.maxPrice !== undefined) {
+          filteredProducts = filteredProducts.filter(
+            product => product.price <= filters.maxPrice!
+          );
+        }
+
+        // Фільтрація по назві (пошук)
+        if (filters?.searchQuery) {
+          filteredProducts = filteredProducts.filter(
+            product => product.title.toLowerCase().includes(filters.searchQuery!.toLowerCase())
+          );
+        }
+
+        resolve(filteredProducts);
+      }, 500);
+    });
   } catch (error) {
     console.error('Error fetching products:', error);
     throw error;
@@ -26,47 +46,21 @@ export const getProducts = async (filters?: ProductFilters): Promise<Product[]> 
 
 // Отримати товар по ID
 export const getProductById = async (id: number): Promise<Product> => {
-  try {
-    const response = await api.get<Product>(`/products/${id}`);
-    return response.data;
-  } catch (error) {
-    console.error(`Error fetching product ${id}:`, error);
-    throw error;
+  const product = mockClothingProducts.find(p => p.id === id);
+  if (!product) {
+    throw new Error(`Product with id ${id} not found`);
   }
+  return product;
 };
 
 // Отримати товари по категорії
 export const getProductsByCategory = async (category: string): Promise<Product[]> => {
-  try {
-    const response = await api.get<Product[]>(`/products/category/${category}`);
-    return response.data;
-  } catch (error) {
-    console.error(`Error fetching products for category ${category}:`, error);
-    throw error;
-  }
+  return mockClothingProducts.filter(product =>
+    product.category.toLowerCase().includes(category.toLowerCase())
+  );
 };
 
-// Отримати обмежену кількість товарів (для пагінації)
-export const getLimitedProducts = async (limit: number = 10, offset: number = 0): Promise<Product[]> => {
-  try {
-    const response = await api.get<Product[]>(`/products?limit=${limit}&offset=${offset}`);
-    return response.data;
-  } catch (error) {
-    console.error('Error fetching limited products:', error);
-    throw error;
-  }
-};
-
-// Пошук товарів
-export const searchProducts = async (query: string): Promise<Product[]> => {
-  try {
-    const allProducts = await getProducts();
-    return allProducts.filter(product =>
-      product.title.toLowerCase().includes(query.toLowerCase()) ||
-      product.description.toLowerCase().includes(query.toLowerCase())
-    );
-  } catch (error) {
-    console.error('Error searching products:', error);
-    throw error;
-  }
+// Отримати обмежену кількість товарів
+export const getLimitedProducts = async (limit: number = 8, offset: number = 0): Promise<Product[]> => {
+  return mockClothingProducts.slice(offset, offset + limit);
 };

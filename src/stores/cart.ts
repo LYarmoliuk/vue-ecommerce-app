@@ -20,13 +20,13 @@ export const useCartStore = defineStore('cart', () => {
 
   // Getters
   const total = computed(() => {
-    return items.value.reduce((sum, item) => {
+    return items.value.reduce((sum: number, item: CartItem) => {
       return sum + (item.product.price * item.quantity);
     }, 0);
   });
 
   const totalItems = computed(() => {
-    return items.value.reduce((sum, item) => sum + item.quantity, 0);
+    return items.value.reduce((sum: number, item: CartItem) => sum + item.quantity, 0);
   });
 
   const isInCart = computed(() => (productId: number) => {
