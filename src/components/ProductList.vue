@@ -1,109 +1,90 @@
-<!-- src/components/ProductList.vue -->
 <template>
-  <div class="product-list">
-    <div v-if="loading" class="loading-state">
-      <div class="skeleton" v-for="i in 6" :key="i"></div>
+  <div class="product-list-container">
+    <div v-if="isLoading" class="loading">
+      Завантаження товарів...
     </div>
-
-    <div v-else-if="error" class="error-state">
-      ⚠️ {{ error }}
+    <div v-else-if="products.length === 0" class="no-products">
+      Товарів за вашим запитом не знайдено.
     </div>
-
-    <div v-else-if="products.length === 0" class="empty-state">
-      😔 No products found.
-    </div>
-
-    <div v-else class="grid">
-      <ProductCard
+    <div v-else class="product-grid">
+      <div
         v-for="product in products"
         :key="product.id"
-        :product="product"
-        @add-to-cart="handleAddToCart"
-        @add-to-wishlist="handleAddToWishlist"
-      />
+        class="product-card"
+      >
+        <div class="product-image" :style="{ backgroundColor: product.color }"></div>
+        <div class="product-info">
+          <h4 class="product-name">{{ product.name }}</h4>
+          <p class="product-category">{{ product.category }}</p>
+          <p class="product-price">${{ product.price }}</p>
+        </div>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import ProductCard from './ProductCard.vue'
-
+// Мок-тип для продукту
 interface Product {
-  id: number
-  name: string
-  price: number
-  image: string
+  id: number;
+  name: string;
+  price: number;
+  category: string;
+  color: string; // для мок-зображення
 }
 
-const products = ref<Product[]>([])
-const loading = ref(true)
-const error = ref('')
-
-const fetchProducts = async () => {
-  try {
-    loading.value = true
-    await new Promise((r) => setTimeout(r, 1200)) // Імітація запиту
-
-    products.value = [
-      { id: 1, name: 'iPhone 15 Pro', price: 49999, image: '/img/iphone15.webp' },
-      { id: 2, name: 'MacBook Air M3', price: 59999, image: '/img/macbook.webp' },
-      { id: 3, name: 'AirPods Pro 2', price: 9999, image: '/img/airpods.webp' },
-      { id: 4, name: 'Apple Watch 9', price: 14999, image: '/img/watch.webp' }
-    ]
-  } catch (err) {
-    error.value = 'Failed to load products 😢'
-  } finally {
-    loading.value = false
-  }
-}
-
-const handleAddToCart = (product: Product) => {
-  alert(`✅ ${product.name} added to cart!`)
-}
-
-const handleAddToWishlist = (product: Product) => {
-  alert(`💖 ${product.name} added to wishlist!`)
-}
-
-onMounted(fetchProducts)
+defineProps<{
+  products: Product[];
+  isLoading: boolean;
+}>();
 </script>
 
 <style scoped>
-.grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  gap: 30px;
-}
-
-.loading-state {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  gap: 30px;
-}
-
-.skeleton {
-  background: linear-gradient(90deg, #f0f0f0 25%, #e6e6e6 50%, #f0f0f0 75%);
-  background-size: 200% 100%;
-  height: 300px;
-  border-radius: 12px;
-  animation: shimmer 1.6s infinite;
-}
-
-@keyframes shimmer {
-  0% {
-    background-position: -200% 0;
-  }
-  100% {
-    background-position: 200% 0;
-  }
-}
-
-.error-state,
-.empty-state {
+.loading, .no-products {
   text-align: center;
   font-size: 1.2rem;
-  padding: 40px 0;
-  color: #555;
+  color: #64748b;
+  padding: 60px 0;
+}
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 24px;
+}
+.product-card {
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+  transition: all 0.2s;
+}
+.product-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.07);
+}
+.product-image {
+  height: 200px;
+  width: 100%;
+}
+.product-info {
+  padding: 16px;
+}
+.product-name {
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0 0 4px;
+}
+.product-category {
+  font-size: 0.9rem;
+  color: #64748b;
+  margin: 0 0 12px;
+}
+.product-price {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #3b82f6;
+  margin: 0;
 }
 </style>

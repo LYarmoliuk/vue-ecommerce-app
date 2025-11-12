@@ -6,5 +6,4 @@
 </template>
 
 <style scoped>
-/* Анімація обертання вже додана через клас 'animate-spin' від Tailwind */
 </style>
