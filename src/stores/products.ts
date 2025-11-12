@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import type { Product, ProductFilters, Pagination } from '@/types';
-import { getProducts, getProductsByCategory } from '@/api/products';
+import { getProducts, getProductsByCategory } from '@/api/productsApi';
 
 export const useProductsStore = defineStore('products', () => {
   // State
@@ -13,10 +13,18 @@ export const useProductsStore = defineStore('products', () => {
   // Пагінація
   const pagination = ref<Pagination>({
     currentPage: 1,
-    itemsPerPage: 12,
+    itemsPerPage: 8, // Зменшимо для демонстрації пагінації
     totalItems: 0,
     totalPages: 0
   });
+
+  // Додай цей метод для дебагу
+  const debugProducts = () => {
+    console.log('Products in store:', products.value);
+    console.log('Filtered products:', filteredProducts.value);
+    console.log('Paginated products:', paginatedProducts.value);
+    console.log('Pagination:', pagination.value);
+  };
 
   // Getters
   const filteredProducts = computed(() => {
@@ -53,6 +61,15 @@ export const useProductsStore = defineStore('products', () => {
     if (filters.value.inStock !== undefined) {
       filtered = filtered.filter(product =>
         product.inStock === filters.value.inStock
+      );
+    }
+
+    // Фільтрація по пошуковому запиту
+    if (filters.value.searchQuery) {
+      const searchLower = filters.value.searchQuery.toLowerCase();
+      filtered = filtered.filter(product =>
+        product.title.toLowerCase().includes(searchLower) ||
+        product.description.toLowerCase().includes(searchLower)
       );
     }
 
@@ -101,11 +118,13 @@ export const useProductsStore = defineStore('products', () => {
     error.value = null;
 
     try {
-      products.value = await getProducts();
+      const allProducts = await getProducts();
+      products.value = allProducts;
       updatePagination();
+      console.log('Products loaded:', allProducts.length);
     } catch (err) {
-      error.value = 'Failed to fetch products';
-      console.error(err);
+      error.value = 'Не вдалося завантажити товари';
+      console.error('Error fetching products:', err);
     } finally {
       loading.value = false;
     }
@@ -119,14 +138,15 @@ export const useProductsStore = defineStore('products', () => {
       products.value = await getProductsByCategory(category);
       updatePagination();
     } catch (err) {
-      error.value = `Failed to fetch products for category ${category}`;
-      console.error(err);
+      error.value = `Не вдалося завантажити товари для категорії ${category}`;
+      console.error('Error fetching products by category:', err);
     } finally {
       loading.value = false;
     }
   };
 
   const applyFilters = (newFilters: ProductFilters) => {
+    console.log('Applying filters:', newFilters);
     filters.value = { ...filters.value, ...newFilters };
     pagination.value.currentPage = 1;
     updatePagination();
@@ -139,6 +159,7 @@ export const useProductsStore = defineStore('products', () => {
   };
 
   const setPage = (page: number) => {
+    console.log('Setting page to:', page);
     if (page >= 1 && page <= pagination.value.totalPages) {
       pagination.value.currentPage = page;
     }
@@ -166,6 +187,12 @@ export const useProductsStore = defineStore('products', () => {
     if (pagination.value.currentPage > pagination.value.totalPages) {
       pagination.value.currentPage = Math.max(1, pagination.value.totalPages);
     }
+
+    console.log('Pagination updated:', {
+      currentPage: pagination.value.currentPage,
+      totalPages: pagination.value.totalPages,
+      totalItems: pagination.value.totalItems
+    });
   };
 
   const clearError = () => {
@@ -174,11 +201,11 @@ export const useProductsStore = defineStore('products', () => {
 
   return {
     // State
-    products,
-    loading,
-    error,
-    filters,
-    pagination,
+    products: computed(() => products.value),
+    loading: computed(() => loading.value),
+    error: computed(() => error.value),
+    filters: computed(() => filters.value),
+    pagination: computed(() => pagination.value),
 
     // Getters
     filteredProducts,
@@ -193,6 +220,7 @@ export const useProductsStore = defineStore('products', () => {
     nextPage,
     previousPage,
     clearError,
-    updatePagination
+    updatePagination,
+    debugProducts
   };
 });

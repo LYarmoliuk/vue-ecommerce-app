@@ -1,6 +1,6 @@
 <template>
   <div class="filter-panel">
-    <h3 class="filter-title">Filters</h3>
+    <h3 class="filter-title">Фільтри</h3>
     <div class="filter-group">
       <label for="search">Назва товару</label>
       <input
@@ -41,24 +41,21 @@
         <option value="">Всі категорії</option>
         <option value="men">Чоловічий одяг</option>
         <option value="women">Жіночий одяг</option>
-        <option value="kids">Дитячий одяг</option>
-        <option value="accessories">Аксесуари</option>
       </select>
     </div>
 
     <div class="filter-buttons">
       <button class="btn btn-primary" @click="emit('apply')">
-        Apply Filters
+        Застосувати фільтри
       </button>
       <button class="btn btn-secondary" @click="emit('clear')">
-        Clear Filters
+        Очистити фільтри
       </button>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-// Типізуємо props та emits для v-model та кастомних подій
 interface Filters {
   search: string;
   minPrice: string | number;
@@ -66,8 +63,6 @@ interface Filters {
   category: string;
 }
 
-// --- ВИПРАВЛЕННЯ ---
-// Ми маємо присвоїти результат defineProps змінній, щоб мати доступ до 'props'
 const props = defineProps<{
   modelValue: Filters;
 }>();
@@ -78,11 +73,9 @@ const emit = defineEmits<{
   (e: 'clear'): void;
 }>();
 
-// Єдина функція для оновлення будь-якого поля
-// Тепер 'props.modelValue' у цій функції буде працювати
 const updateFilter = (key: keyof Filters, value: string | number) => {
   emit('update:modelValue', {
-    ...props.modelValue, // <-- Тепер 'props' коректно визначено
+    ...props.modelValue,
     [key]: value,
   });
 };

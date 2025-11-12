@@ -15,148 +15,196 @@
       </aside>
 
       <main class="content">
-        <ProductList :products="products" :is-loading="isLoading" />
+        <!-- Додамо перевірку стану завантаження та помилок -->
+        <div v-if="productsStore.loading" class="loading-state">
+          <p>🔄 Завантаження товарів...</p>
+        </div>
 
-        <Pagination
-          :current-page="currentPage"
-          :total-pages="totalPages"
-          @change-page="handlePageChange"
-        />
+        <div v-else-if="productsStore.error" class="error-state">
+          <p>❌ Помилка: {{ productsStore.error }}</p>
+          <button @click="retryLoading" class="retry-btn">Спробувати знову</button>
+        </div>
+
+        <div v-else>
+          <!-- Інформація про фільтри та пагінацію -->
+          <div class="results-info">
+            <p>Знайдено товарів: {{ productsStore.filteredProducts.length }}</p>
+            <p v-if="productsStore.pagination.totalPages > 1">
+              Сторінка {{ productsStore.pagination.currentPage }} з {{ productsStore.pagination.totalPages }}
+            </p>
+          </div>
+
+          <ProductList
+            :products="productsStore.paginatedProducts"
+            :is-loading="productsStore.loading"
+          />
+
+          <Pagination
+            v-if="productsStore.pagination.totalPages > 1"
+            :current-page="productsStore.pagination.currentPage"
+            :total-pages="productsStore.pagination.totalPages"
+            @change-page="handlePageChange"
+          />
+        </div>
       </main>
     </div>
+
+    <!-- Кнопка для дебагу -->
+    <button @click="productsStore.debugProducts" class="debug-btn">
+      🐛 Debug Products
+    </button>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue';
+import { ref, onMounted, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
+import { useProductsStore } from '@/stores/products';
 import ProductList from '@/components/ProductList.vue';
 import FilterPanel from '@/components/FilterPanel.vue';
 import Pagination from '@/components/Pagination.vue';
 
-// --- Мок-тип та дані ---
-interface Product {
-  id: number;
-  name: string;
-  price: number;
-  category: string;
-  color: string;
-}
-const ALL_PRODUCTS: Product[] = [
-  { id: 1, name: 'Синя футболка', price: 25, category: 'men', color: '#3b82f6' },
-  { id: 2, name: 'Червона сукня', price: 120, category: 'women', color: '#ef4444' },
-  { id: 3, name: 'Зелені шорти', price: 45, category: 'men', color: '#22c55e' },
-  { id: 4, name: 'Жовта панама', price: 15, category: 'accessories', color: '#eab308' },
-  { id: 5, name: 'Дитячі кросівки', price: 60, category: 'kids', color: '#f97316' },
-  { id: 6, name: 'Біла сорочка', price: 80, category: 'women', color: '#f1f5f9' },
-  { id: 7, name: 'Чорні джинси', price: 100, category: 'men', color: '#1e293b' },
-  { id: 8, name: 'Рожева шапка', price: 22, category: 'kids', color: '#ec4899' },
-  // ... додайте більше товарів для тестування
-];
-// --- Кінець мок-даних ---
-
-// --- Стан ---
 const route = useRoute();
 const router = useRouter();
+const productsStore = useProductsStore();
 
+// Фільтри, які будуть зв'язані з FilterPanel
 const filters = ref({
   search: '',
   minPrice: '',
   maxPrice: '',
   category: '',
 });
-const currentPage = ref(1);
-const totalPages = ref(1);
-const products = ref<Product[]>([]);
-const isLoading = ref(false);
 
-const ITEMS_PER_PAGE = 6;
+// Завантажити товари при старті
+onMounted(() => {
+  console.log('HomeView mounted - fetching products');
+  productsStore.fetchProducts();
+});
 
-// --- Логіка ---
-
-// 1. Функція, що оновлює URL
-const updateRouterQuery = () => {
-  const query: Record<string, any> = {};
-
-  // Додаємо фільтри, лише якщо вони не пусті
-  if (filters.value.search) query.search = filters.value.search;
-  if (filters.value.minPrice) query.min = filters.value.minPrice;
-  if (filters.value.maxPrice) query.max = filters.value.maxPrice;
-  if (filters.value.category) query.category = filters.value.category;
-  if (currentPage.value > 1) query.page = currentPage.value;
-
-  router.push({ query });
+const retryLoading = () => {
+  productsStore.clearError();
+  productsStore.fetchProducts();
 };
 
-// 2. Обробники подій від дочірніх компонентів
+// Обробники подій від дочірніх компонентів
 const applyFilters = () => {
-  currentPage.value = 1; // При нових фільтрах скидаємо на 1 сторінку
+  console.log('Applying filters from panel:', filters.value);
+
+  const filtersToApply: {
+    searchQuery?: string;
+    minPrice?: number;
+    maxPrice?: number;
+    category?: string;
+  } = {};
+
+  if (filters.value.search) {
+    filtersToApply.searchQuery = filters.value.search;
+  }
+  if (filters.value.minPrice) {
+    filtersToApply.minPrice = Number(filters.value.minPrice);
+  }
+  if (filters.value.maxPrice) {
+    filtersToApply.maxPrice = Number(filters.value.maxPrice);
+  }
+  if (filters.value.category) {
+    // Перетворюємо значення категорії з FilterPanel у наш формат
+    let category = '';
+    switch (filters.value.category) {
+      case 'men':
+        category = "men's clothing";
+        break;
+      case 'women':
+        category = "women's clothing";
+        break;
+      default:
+        category = filters.value.category;
+    }
+    filtersToApply.category = category;
+  }
+
+  productsStore.applyFilters(filtersToApply);
   updateRouterQuery();
 };
 
 const clearFilters = () => {
+  console.log('Clearing filters');
   filters.value = { search: '', minPrice: '', maxPrice: '', category: '' };
-  currentPage.value = 1;
+  productsStore.clearFilters();
+  productsStore.fetchProducts();
   updateRouterQuery();
 };
 
 const handlePageChange = (page: number) => {
-  currentPage.value = page;
+  console.log('Page changed to:', page);
+  productsStore.setPage(page);
   updateRouterQuery();
 };
 
-// 3. Функція завантаження даних (зараз це мок)
-// В реальному проекті тут був би fetch/axios до вашого API
-const fetchData = (query: typeof route.query) => {
-  console.log('Завантаження даних для запиту:', query);
-  isLoading.value = true;
+// Оновлення URL з поточними фільтрами та пагінацією
+const updateRouterQuery = () => {
+  const query: Record<string, string | number> = {};
 
-  // Мок-затримка
-  setTimeout(() => {
-    // 1. Фільтрація
-    let filtered = [...ALL_PRODUCTS];
+  if (filters.value.search) query.search = filters.value.search;
+  if (filters.value.minPrice) query.minPrice = filters.value.minPrice;
+  if (filters.value.maxPrice) query.maxPrice = filters.value.maxPrice;
+  if (filters.value.category) query.category = filters.value.category;
+  if (productsStore.pagination.currentPage > 1) query.page = productsStore.pagination.currentPage;
 
-    if (query.search) {
-      filtered = filtered.filter(p =>
-        p.name.toLowerCase().includes(String(query.search).toLowerCase())
-      );
-    }
-    if (query.min) {
-      filtered = filtered.filter(p => p.price >= Number(query.min));
-    }
-    if (query.max) {
-      filtered = filtered.filter(p => p.price <= Number(query.max));
-    }
-    if (query.category) {
-      filtered = filtered.filter(p => p.category === query.category);
-    }
-
-    // 2. Пагінація
-    const page = Number(query.page || 1);
-    const start = (page - 1) * ITEMS_PER_PAGE;
-    const end = start + ITEMS_PER_PAGE;
-
-    products.value = filtered.slice(start, end);
-    totalPages.value = Math.ceil(filtered.length / ITEMS_PER_PAGE);
-    isLoading.value = false;
-  }, 500);
+  router.push({ query });
 };
 
-// 4. ГОЛОВНИЙ ЕЛЕМЕНТ: Watcher, що реагує на зміни URL
+// Спостерігач за змінами маршруту для синхронізації з URL
 watch(
   () => route.query,
   (newQuery) => {
-    // Синхронізуємо стан компонентів (фільтри, сторінка) з URL
-    filters.value.search = String(newQuery.search || '');
-    filters.value.minPrice = String(newQuery.min || '');
-    filters.value.maxPrice = String(newQuery.max || '');
-    filters.value.category = String(newQuery.category || '');
-    currentPage.value = Number(newQuery.page || 1);
+    console.log('Route query changed:', newQuery);
 
-    // Запускаємо завантаження даних
-    fetchData(newQuery);
+    // Синхронізуємо фільтри з URL
+    filters.value.search = String(newQuery.search || '');
+    filters.value.minPrice = String(newQuery.minPrice || '');
+    filters.value.maxPrice = String(newQuery.maxPrice || '');
+    filters.value.category = String(newQuery.category || '');
+
+    // Застосовуємо фільтри до store
+    const filtersToApply: {
+      searchQuery?: string;
+      minPrice?: number;
+      maxPrice?: number;
+      category?: string;
+    } = {};
+
+    if (newQuery.search) filtersToApply.searchQuery = String(newQuery.search);
+    if (newQuery.minPrice) filtersToApply.minPrice = Number(newQuery.minPrice);
+    if (newQuery.maxPrice) filtersToApply.maxPrice = Number(newQuery.maxPrice);
+    if (newQuery.category) {
+      let category = '';
+      switch (newQuery.category) {
+        case 'men':
+          category = "men's clothing";
+          break;
+        case 'women':
+          category = "women's clothing";
+          break;
+        default:
+          category = String(newQuery.category);
+      }
+      filtersToApply.category = category;
+    }
+
+    if (Object.keys(filtersToApply).length > 0) {
+      productsStore.applyFilters(filtersToApply);
+    } else {
+      // Якщо немає фільтрів, завантажуємо всі товари
+      productsStore.fetchProducts();
+    }
+
+    // Синхронізуємо пагінацію
+    if (newQuery.page) {
+      productsStore.setPage(Number(newQuery.page));
+    }
   },
-  { immediate: true } // Запускаємо watcher одразу при завантаженні компонента
+  { immediate: true }
 );
 </script>
 
@@ -165,33 +213,91 @@ watch(
   padding: 40px 20px;
   max-width: 1400px;
   margin: 0 auto;
+  position: relative;
 }
+
 .header {
   text-align: center;
   margin-bottom: 40px;
 }
+
 .title {
   font-size: 2.8rem;
   font-weight: 800;
   color: #1e293b;
   margin-bottom: 10px;
 }
+
 .subtitle {
   font-size: 1.2rem;
   color: #64748b;
 }
 
-/* Створюємо layout з сайдбаром */
 .main-layout {
   display: grid;
-  grid-template-columns: 280px 1fr; /* Сайдбар 280px, решта - контент */
+  grid-template-columns: 280px 1fr;
   gap: 32px;
 }
 
-/* Адаптивність */
+.loading-state, .error-state {
+  text-align: center;
+  padding: 40px;
+  font-size: 1.2rem;
+}
+
+.error-state {
+  color: #ef4444;
+}
+
+.retry-btn {
+  margin-top: 10px;
+  padding: 8px 16px;
+  background: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.results-info {
+  margin-bottom: 20px;
+  padding: 10px;
+  background: #f8fafc;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.results-info p {
+  margin: 5px 0;
+  color: #64748b;
+}
+
+.debug-btn {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  padding: 8px 12px;
+  background: #8b5cf6;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  z-index: 1000;
+}
+
+.debug-btn:hover {
+  background: #7c3aed;
+}
+
 @media (max-width: 900px) {
   .main-layout {
-    grid-template-columns: 1fr; /* На мобільних все в один стовпець */
+    grid-template-columns: 1fr;
+  }
+
+  .debug-btn {
+    bottom: 10px;
+    right: 10px;
   }
 }
 </style>
