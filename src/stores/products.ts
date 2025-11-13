@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import type { Product, ProductFilters, Pagination } from '@/types';
-import { getProducts, getProductsByCategory } from '@/api/productsApi';
+import { getProducts, getProductsByCategory, getProductById } from '@/api/productsApi';
 
 export const useProductsStore = defineStore('products', () => {
   // State
@@ -145,6 +145,28 @@ export const useProductsStore = defineStore('products', () => {
     }
   };
 
+  // Отримати один товар по ID
+  const fetchProductById = async (id: number): Promise<Product> => {
+    loading.value = true;
+    error.value = null;
+
+    try {
+      const product = await getProductById(id);
+      return product;
+    } catch (err) {
+      error.value = `Не вдалося завантажити товар #${id}`;
+      console.error('Error fetching product by id:', err);
+      throw err;
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  // Отримати товар з локального стану (якщо він вже завантажений)
+  const getProductFromState = (id: number): Product | undefined => {
+    return products.value.find(p => p.id === id);
+  };
+
   const applyFilters = (newFilters: ProductFilters) => {
     console.log('Applying filters:', newFilters);
     filters.value = { ...filters.value, ...newFilters };
@@ -214,6 +236,8 @@ export const useProductsStore = defineStore('products', () => {
     // Actions
     fetchProducts,
     fetchProductsByCategory,
+    fetchProductById,
+    getProductFromState,
     applyFilters,
     clearFilters,
     setPage,
