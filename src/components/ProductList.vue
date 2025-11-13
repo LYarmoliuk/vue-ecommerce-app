@@ -1,16 +1,17 @@
 <template>
   <div class="product-list-container">
     <div v-if="isLoading" class="loading">
-      🔄 Завантаження товарів...
+      Завантаження товарів...
     </div>
     <div v-else-if="products.length === 0" class="no-products">
-      😔 Товарів за вашим запитом не знайдено.
+      Товарів за вашим запитом не знайдено.
     </div>
     <div v-else class="product-grid">
       <div
         v-for="product in products"
         :key="product.id"
         class="product-card"
+        @click="goToProduct(product.id)"
       >
         <img
           :src="product.image"
@@ -31,12 +32,19 @@
 </template>
 
 <script setup lang="ts">
+import { useRouter } from 'vue-router'
 import type { Product } from '@/types';
 
 defineProps<{
   products: Product[];
   isLoading: boolean;
 }>();
+
+const router = useRouter()
+
+const goToProduct = (productId: number) => {
+  router.push(`/product/${productId}`)
+}
 
 const formatCategory = (category: string) => {
   const categoryMap: { [key: string]: string } = {
@@ -53,6 +61,10 @@ const handleImageError = (event: Event) => {
 </script>
 
 <style scoped>
+.product-list-container {
+  width: 100%;
+}
+
 .loading, .no-products {
   text-align: center;
   font-size: 1.2rem;
@@ -73,6 +85,7 @@ const handleImageError = (event: Event) => {
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
   overflow: hidden;
   transition: all 0.2s;
+  cursor: pointer;
 }
 
 .product-card:hover {
@@ -124,5 +137,23 @@ const handleImageError = (event: Event) => {
   color: #ef4444;
   margin: 8px 0 0;
   font-weight: 500;
+}
+
+@media (max-width: 768px) {
+  .product-grid {
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 16px;
+  }
+
+  .product-image {
+    height: 180px;
+  }
+}
+
+@media (max-width: 480px) {
+  .product-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
 }
 </style>

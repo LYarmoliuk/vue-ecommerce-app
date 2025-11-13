@@ -73,12 +73,11 @@ onMounted(() => {
         E-Shop
       </RouterLink>
 
-      <!-- Навігація для ПК -->
-      <div class="nav-links-desktop">
-        <RouterLink to="/" class="nav-link"><span>Shop</span></RouterLink>
-        <RouterLink to="/wishlist" class="nav-link"><span>Wishlist</span></RouterLink>
-        <RouterLink to="/cart" class="nav-link"><span>Cart</span></RouterLink>
-      </div>
+     <div class="nav-links-desktop">
+  <RouterLink to="/" class="nav-link"><span>Магазин</span></RouterLink>
+  <RouterLink to="/wishlist" class="nav-link"><span>Улюблене</span></RouterLink>
+  <RouterLink to="/cart" class="nav-link"><span>Кошик</span></RouterLink>
+</div>
 
       <!-- Іконки -->
       <div class="nav-icons">
@@ -131,12 +130,12 @@ onMounted(() => {
 
     <!-- Повноекранне мобільне меню -->
     <transition name="mobile-menu-fade">
-      <div v-if="isMobileMenuOpen" class="mobile-menu">
-        <RouterLink to="/" class="mobile-nav-link" @click="isMobileMenuOpen = false">Shop</RouterLink>
-        <RouterLink to="/wishlist" class="mobile-nav-link" @click="isMobileMenuOpen = false">Wishlist</RouterLink>
-        <RouterLink to="/cart" class="mobile-nav-link" @click="isMobileMenuOpen = false">Cart</RouterLink>
-        <RouterLink to="/profile" class="mobile-nav-link" @click="isMobileMenuOpen = false">Profile</RouterLink>
-      </div>
+    <!-- В mobile-menu -->
+<div v-if="isMobileMenuOpen" class="mobile-menu">
+  <RouterLink to="/" class="mobile-nav-link" @click="isMobileMenuOpen = false">Магазин</RouterLink>
+  <RouterLink to="/wishlist" class="mobile-nav-link" @click="isMobileMenuOpen = false">Улюблене</RouterLink>
+  <RouterLink to="/cart" class="mobile-nav-link" @click="isMobileMenuOpen = false">Кошик</RouterLink>
+</div>
     </transition>
   </header>
 
