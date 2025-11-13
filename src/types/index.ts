@@ -1,97 +1,171 @@
-import { createRouter, createWebHistory } from 'vue-router'
-import HomeView from '../views/HomeView.vue'
-import WishlistView from '../views/WishlistView.vue'
-import CartView from '../views/CartView.vue'
-import ProductDetailView from '../views/ProductDetailView.vue'
-import NotFoundView from '../views/NotFoundView.vue'
+// Базові типи для продуктів
+export interface Product {
+  id: number;
+  title: string;
+  price: number;
+  description: string;
+  category: string;
+  image: string;
+  rating: {
+    rate: number;
+    count: number;
+  };
+  size?: string;
+  color?: string;
+  inStock: boolean;
+  brand?: string;
+  material?: string;
+}
 
-const router = createRouter({
-  history: createWebHistory(import.meta.env.BASE_URL),
+// Фільтри для продуктів
+export interface ProductFilters {
+  category?: string;
+  minPrice?: number;
+  maxPrice?: number;
+  minRating?: number;
+  inStock?: boolean;
+  searchQuery?: string;
+  sortBy?: 'price' | 'rating' | 'name';
+  sortOrder?: 'asc' | 'desc';
+}
 
-  // Scroll Behavior - скрол до верху при зміні роуту
-  scrollBehavior(to, from, savedPosition) {
-    if (savedPosition) {
-      return savedPosition
-    }
-    if (to.hash) {
-      return {
-        el: to.hash,
-        behavior: 'smooth'
-      }
-    }
-    return { top: 0, behavior: 'smooth' }
-  },
+// Пагінація
+export interface Pagination {
+  currentPage: number;
+  itemsPerPage: number;
+  totalItems: number;
+  totalPages: number;
+}
 
-  routes: [
-    {
-      path: '/',
-      name: 'home',
-      component: HomeView,
-      meta: {
-        title: 'E-Shop - Головна'
-      }
-    },
-    {
-      path: '/product/:id',
-      name: 'product',
-      component: ProductDetailView,
-      props: true,
-      meta: {
-        title: 'E-Shop - Деталі товару'
-      }
-    },
-    {
-      path: '/cart',
-      name: 'cart',
-      component: CartView,
-      meta: {
-        title: 'E-Shop - Кошик'
-      }
-    },
-    {
-      path: '/wishlist',
-      name: 'wishlist',
-      component: WishlistView,
-      meta: {
-        title: 'E-Shop - Список бажань'
-      }
-    },
-    {
-      path: '/about',
-      name: 'about',
-      component: () => import('../views/AboutView.vue'),
-      meta: {
-        title: 'E-Shop - Про нас'
-      }
-    },
-    {
-      path: '/404',
-      name: '404',
-      component: NotFoundView,
-      meta: {
-        title: 'E-Shop - Сторінку не знайдено'
-      }
-    },
-    {
-      path: '/:pathMatch(.*)*',
-      redirect: '/404'
-    }
-  ]
-})
+// Елемент кошика
+export interface CartItem {
+  product: Product;
+  quantity: number;
+  selectedSize?: string;
+  selectedColor?: string;
+}
 
-// Route Guards
-router.beforeEach((to, from, next) => {
-  console.log(`Навігація з ${from.path} до ${to.path}`)
+// Категорії
+export interface Category {
+  id: number;
+  name: string;
+  description: string;
+}
 
-  if (to.meta.title) {
-    document.title = to.meta.title as string
-  }
+// Стан завантаження
+export interface LoadingState {
+  loading: boolean;
+  error: string | null;
+}
 
-  next()
-})
+// Користувач (якщо буде авторизація)
+export interface User {
+  id: number;
+  name: string;
+  email: string;
+  avatar?: string;
+}
 
-router.afterEach((to, from) => {
-  console.log(`Успішно перейшли до ${to.path}`)
-})
+// Замовлення
+export interface Order {
+  id: number;
+  userId: number;
+  items: CartItem[];
+  total: number;
+  status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
+  createdAt: string;
+  updatedAt: string;
+  shippingAddress?: {
+    street: string;
+    city: string;
+    zipCode: string;
+    country: string;
+  };
+}
 
-export default router
+// Відгуки про товари
+export interface Review {
+  id: number;
+  productId: number;
+  userId: number;
+  userName: string;
+  rating: number;
+  comment: string;
+  createdAt: string;
+}
+
+// Налаштування сайту
+export interface AppSettings {
+  theme: 'light' | 'dark';
+  currency: string;
+  language: string;
+}
+
+// Відповідь API
+export interface ApiResponse<T> {
+  data: T;
+  message?: string;
+  success: boolean;
+}
+
+// Помилка API
+export interface ApiError {
+  message: string;
+  code: number;
+  details?: unknown;
+}
+
+// Фільтри для історії замовлень
+export interface OrderFilters {
+  status?: string;
+  startDate?: string;
+  endDate?: string;
+  minAmount?: number;
+  maxAmount?: number;
+}
+
+// Статистика
+export interface Statistics {
+  totalProducts: number;
+  totalOrders: number;
+  totalUsers: number;
+  totalRevenue: number;
+}
+
+// Нотифікації
+export interface Notification {
+  id: number;
+  type: 'success' | 'error' | 'warning' | 'info';
+  title: string;
+  message: string;
+  duration?: number;
+  read: boolean;
+  createdAt: string;
+}
+
+// Модальні вікна
+export interface Modal {
+  id: string;
+  component: unknown; // Замінили any на unknown
+  props?: Record<string, unknown>;
+  open: boolean;
+}
+
+// Конфігурація сайту
+export interface SiteConfig {
+  name: string;
+  description: string;
+  logo: string;
+  favicon: string;
+  socialLinks: {
+    facebook?: string;
+    twitter?: string;
+    instagram?: string;
+    youtube?: string;
+  };
+  contact: {
+    email: string;
+    phone: string;
+    address: string;
+  };
+}
