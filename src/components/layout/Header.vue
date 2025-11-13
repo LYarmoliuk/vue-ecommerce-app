@@ -1,6 +1,7 @@
+<!-- src/components/AppHeader.vue -->
 <script setup lang="ts">
 import { RouterLink } from 'vue-router'
-import { ref, watch, onMounted, onBeforeUnmount, computed } from 'vue'
+import { ref, watch, onMounted, onBeforeUnmount, computed, provide } from 'vue'
 
 // --- Стан меню ---
 const isMobileMenuOpen = ref(false)
@@ -28,9 +29,49 @@ onBeforeUnmount(() => {
   window.removeEventListener('scroll', handleScroll)
 })
 
-// --- Стан кошика (з Pinia) ---
-const wishlistCount = ref(3)
-const cartCount = ref(1)
+// --- Інтерфейси ---
+interface CartItem {
+  id: number
+  name: string
+  price: number
+  image: string
+  quantity: number
+}
+
+interface WishlistItem {
+  id: number
+  name: string
+  price: number
+  image: string
+}
+
+// --- Логіка кошика та списку бажань ---
+const loadFromLocalStorage = <T>(key: string, defaultValue: T): T => {
+  try {
+    const item = localStorage.getItem(key)
+    return item ? JSON.parse(item) : defaultValue
+  } catch {
+    return defaultValue
+  }
+}
+
+const saveToLocalStorage = (key: string, data: any) => {
+  try {
+    localStorage.setItem(key, JSON.stringify(data))
+  } catch (error) {
+    console.error('Помилка збереження в localStorage:', error)
+  }
+}
+
+// Стани
+const cartItems = ref<CartItem[]>(loadFromLocalStorage('cart', []))
+const wishlistItems = ref<WishlistItem[]>(loadFromLocalStorage('wishlist', []))
+
+// Комп'ютери для підрахунку
+const wishlistCount = computed(() => wishlistItems.value.length)
+const cartCount = computed(() =>
+  cartItems.value.reduce((total, item) => total + item.quantity, 0)
+)
 
 // --- Логіка для "Pop" анімації ---
 const wishlistBadgePop = ref(false)
@@ -40,82 +81,168 @@ const isWishlistVisible = computed(() => wishlistCount.value > 0)
 const isCartVisible = computed(() => cartCount.value > 0)
 
 watch(wishlistCount, (newCount, old) => {
-  if (newCount > old) { // "Pop" тільки при збільшенні
+  if (newCount > old) {
     wishlistBadgePop.value = true
-    setTimeout(() => { wishlistBadgePop.value = false }, 300) // Тривалість анімації
+    setTimeout(() => { wishlistBadgePop.value = false }, 300)
   }
 })
 
 watch(cartCount, (newCount, old) => {
-  if (newCount > old) { // "Pop" тільки при збільшенні
+  if (newCount > old) {
     cartBadgePop.value = true
     setTimeout(() => { cartBadgePop.value = false }, 300)
   }
 })
 
-// --- Демонстрація (можна видалити) ---
-onMounted(() => {
-  // Демонстрація "pop" анімації через 2 секунди
-  setTimeout(() => {
-    cartCount.value++ // Це запустить watch
-  }, 2000)
+// --- Функції для роботи з кошиком та списком бажань ---
+const addToCart = (product: any) => {
+  const existingItem = cartItems.value.find(item => item.id === product.id)
+
+  if (existingItem) {
+    existingItem.quantity++
+  } else {
+    cartItems.value.push({
+      ...product,
+      quantity: 1
+    })
+  }
+
+  saveToLocalStorage('cart', cartItems.value)
+  console.log('Додано до кошика:', product.name, 'Кількість:', cartCount.value)
+}
+
+const addToWishlist = (product: any) => {
+  const existingItem = wishlistItems.value.find(item => item.id === product.id)
+
+  if (!existingItem) {
+    wishlistItems.value.push(product)
+    saveToLocalStorage('wishlist', wishlistItems.value)
+    console.log('Додано до улюбленого:', product.name, 'Кількість:', wishlistCount.value)
+  } else {
+    console.log('Товар вже в улюбленому:', product.name)
+  }
+}
+
+const removeFromCart = (productId: number) => {
+  cartItems.value = cartItems.value.filter(item => item.id !== productId)
+  saveToLocalStorage('cart', cartItems.value)
+  console.log('Видалено з кошика:', productId)
+}
+
+const removeFromWishlist = (productId: number) => {
+  wishlistItems.value = wishlistItems.value.filter(item => item.id !== productId)
+  saveToLocalStorage('wishlist', wishlistItems.value)
+  console.log('Видалено з улюбленого:', productId)
+}
+
+// Надаємо функції дочірнім компонентам
+provide('cartMethods', {
+  addToCart,
+  removeFromCart,
+  cartItems,
+  cartCount
 })
 
+provide('wishlistMethods', {
+  addToWishlist,
+  removeFromWishlist,
+  wishlistItems,
+  wishlistCount
+})
+
+// Експортуємо функції для тестування
+defineExpose({
+  addToCart,
+  addToWishlist,
+  removeFromCart,
+  removeFromWishlist,
+  cartItems,
+  wishlistItems,
+  cartCount,
+  wishlistCount
+})
 </script>
 
 <template>
-  <!-- Додаємо :class для анімації скролу -->
   <header class="app-header" :class="{ 'is-scrolled': isHeaderScrolled }">
     <nav class="header-nav">
-
-      <!-- Logo -->
+      <!-- Logo з градієнтом -->
       <RouterLink to="/" class="logo">
-        E-Shop
+        <span class="logo-icon">✦</span>
+        <span class="logo-text">LINO</span>
       </RouterLink>
 
-     <div class="nav-links-desktop">
-  <RouterLink to="/" class="nav-link"><span>Магазин</span></RouterLink>
-  <RouterLink to="/wishlist" class="nav-link"><span>Улюблене</span></RouterLink>
-  <RouterLink to="/cart" class="nav-link"><span>Кошик</span></RouterLink>
-</div>
-
-      <!-- Іконки -->
-      <div class="nav-icons">
-        <RouterLink to="/wishlist" class="icon-link">
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
-          </svg>
-          <!-- Оновлені класи для анімації "pop" та появи -->
+      <!-- Desktop навігація -->
+      <div class="nav-links-desktop">
+        <RouterLink to="/" class="nav-link">
+          <span class="link-icon">🏪</span>
+          <span class="link-text">Магазин</span>
+        </RouterLink>
+        <RouterLink to="/wishlist" class="nav-link">
+          <span class="link-icon">♥</span>
+          <span class="link-text">Улюблене</span>
           <span
-            class="badge"
-            :class="{ 'is-visible': isWishlistVisible, 'pop': wishlistBadgePop }"
+            v-if="wishlistCount > 0"
+            class="desktop-badge"
           >
             {{ wishlistCount }}
           </span>
         </RouterLink>
-
-        <RouterLink to="/cart" class="icon-link">
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle>
-            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
-          </svg>
-          <!-- Оновлені класи для анімації "pop" та появи -->
+        <RouterLink to="/cart" class="nav-link">
+          <span class="link-icon">🛒</span>
+          <span class="link-text">Кошик</span>
           <span
-            class="badge"
-            :class="{ 'is-visible': isCartVisible, 'pop': cartBadgePop }"
+            v-if="cartCount > 0"
+            class="desktop-badge"
           >
             {{ cartCount }}
           </span>
         </RouterLink>
+      </div>
 
-        <RouterLink to="/profile" class="icon-link profile-icon">
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle>
-          </svg>
+      <!-- Іконки -->
+      <div class="nav-icons">
+        <RouterLink to="/wishlist" class="icon-link" title="Список бажань">
+          <div class="icon-wrapper">
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+            </svg>
+            <span
+              class="badge"
+              :class="{ 'is-visible': isWishlistVisible, 'pop': wishlistBadgePop }"
+            >
+              {{ wishlistCount }}
+            </span>
+          </div>
+        </RouterLink>
+
+        <RouterLink to="/cart" class="icon-link" title="Кошик">
+          <div class="icon-wrapper">
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="9" cy="21" r="1"></circle>
+              <circle cx="20" cy="21" r="1"></circle>
+              <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+            </svg>
+            <span
+              class="badge"
+              :class="{ 'is-visible': isCartVisible, 'pop': cartBadgePop }"
+            >
+              {{ cartCount }}
+            </span>
+          </div>
+        </RouterLink>
+
+        <RouterLink to="/profile" class="icon-link profile-icon" title="Профіль">
+          <div class="icon-wrapper profile-wrapper">
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+          </div>
         </RouterLink>
       </div>
 
-      <!-- Кнопка мобільного меню (Гамбургер) -->
+      <!-- Кнопка мобільного меню -->
       <button
         @click="isMobileMenuOpen = !isMobileMenuOpen"
         class="mobile-menu-button"
@@ -130,52 +257,50 @@ onMounted(() => {
 
     <!-- Повноекранне мобільне меню -->
     <transition name="mobile-menu-fade">
-    <!-- В mobile-menu -->
-<div v-if="isMobileMenuOpen" class="mobile-menu">
-  <RouterLink to="/" class="mobile-nav-link" @click="isMobileMenuOpen = false">Магазин</RouterLink>
-  <RouterLink to="/wishlist" class="mobile-nav-link" @click="isMobileMenuOpen = false">Улюблене</RouterLink>
-  <RouterLink to="/cart" class="mobile-nav-link" @click="isMobileMenuOpen = false">Кошик</RouterLink>
-</div>
+      <div v-if="isMobileMenuOpen" class="mobile-menu">
+        <div class="mobile-menu-content">
+          <RouterLink to="/" class="mobile-nav-link" @click="isMobileMenuOpen = false">
+            <span class="mobile-link-icon">🏪</span>
+            <span class="mobile-link-text">Магазин</span>
+          </RouterLink>
+          <RouterLink to="/wishlist" class="mobile-nav-link" @click="isMobileMenuOpen = false">
+            <span class="mobile-link-icon">♥</span>
+            <span class="mobile-link-text">Улюблене</span>
+            <span v-if="wishlistCount > 0" class="mobile-badge">{{ wishlistCount }}</span>
+          </RouterLink>
+          <RouterLink to="/cart" class="mobile-nav-link" @click="isMobileMenuOpen = false">
+            <span class="mobile-link-icon">🛒</span>
+            <span class="mobile-link-text">Кошик</span>
+            <span v-if="cartCount > 0" class="mobile-badge">{{ cartCount }}</span>
+          </RouterLink>
+          <RouterLink to="/profile" class="mobile-nav-link" @click="isMobileMenuOpen = false">
+            <span class="mobile-link-icon">👤</span>
+            <span class="mobile-link-text">Профіль</span>
+          </RouterLink>
+        </div>
+      </div>
     </transition>
   </header>
-
-
 </template>
 
 <style scoped>
-/* Ваші :root змінні */
-:root {
-  --font-main: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  --color-primary: #007bff;
-  --color-primary-dark: #0056b3;
-  --color-text: #333;
-  --color-text-light: #555;
-  --color-border: #e0e0e0;
-  --color-bg: #ffffff;
-  --color-bg-alt: #f8f9fa;
-  --color-accent: #dc3545;
-}
-
 .app-header {
-  background-color: var(--color-bg);
-  border-bottom: 1px solid var(--color-border);
-  padding: 1rem 1.5rem; /* 16px 24px */
+  background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  padding: 1.25rem 1.5rem;
   position: sticky;
   top: 0;
   z-index: 1000;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-  font-family: var(--font-main);
-
-  /* Плавний перехід для анімації "прилипання" */
-  transition: padding 0.3s ease, box-shadow 0.3s ease, background-color 0.3s ease;
+  box-shadow: 0 2px 20px rgba(0, 0, 0, 0.04);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  backdrop-filter: blur(10px);
 }
 
-/* Стан "прилипання" */
 .app-header.is-scrolled {
-  padding: 0.5rem 1.5rem; /* Зменшуємо висоту */
-  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.08); /* Чіткіша тінь */
-  background-color: rgba(255, 255, 255, 0.95); /* Ефект "скла" */
-  backdrop-filter: blur(5px);
+  padding: 0.875rem 1.5rem;
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.08);
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(15px);
 }
 
 .header-nav {
@@ -186,208 +311,358 @@ onMounted(() => {
   margin: 0 auto;
 }
 
+/* Logo стилі */
 .logo {
-  font-size: 1.75rem; /* 28px */
-  font-weight: 700;
-  color: var(--color-primary);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.75rem;
+  font-weight: 800;
   text-decoration: none;
-  transition: color 0.3s ease;
+  transition: all 0.3s ease;
+  position: relative;
 }
+
+.logo-icon {
+  font-size: 1.5rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: rotate-icon 4s ease-in-out infinite;
+}
+
+@keyframes rotate-icon {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(180deg); }
+}
+
+.logo-text {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: 0.5px;
+}
+
 .logo:hover {
-  color: var(--color-primary-dark);
+  transform: translateY(-2px);
 }
 
+/* Desktop навігація */
 .nav-links-desktop {
-  display: none; /* Ховаємо на мобільних */
+  display: none;
 }
 
+/* Іконки */
 .nav-icons {
   display: flex;
   align-items: center;
-  gap: 1rem; /* 16px */
+  gap: 0.75rem;
 }
 
 .icon-link {
-  position: relative;
-  color: var(--color-text-light);
   text-decoration: none;
-  transition: color 0.3s ease, transform 0.2s ease;
-}
-.icon-link:hover {
-  color: var(--color-primary);
-  transform: scale(1.1); /* Додаємо легку анімацію на іконки */
+  transition: all 0.3s ease;
 }
 
+.icon-wrapper {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-radius: 12px;
+  color: #495057;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 2px solid transparent;
+}
+
+.icon-link:hover .icon-wrapper {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+}
+
+.profile-wrapper {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.icon-link:hover .profile-wrapper {
+  background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+  box-shadow: 0 8px 20px rgba(118, 75, 162, 0.4);
+}
+
+/* Badge стилі */
 .badge {
   position: absolute;
-  top: -8px;
-  right: -10px;
-  background-color:red;
-  color: rgb(255, 255, 255);
-  font-size: 0.75rem; /* 12px */
-  font-weight: 600;
-  width: 20px;
+  top: -6px;
+  right: -6px;
+  background: linear-gradient(135deg, #f43f5e 0%, #e11d48 100%);
+  color: white;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  min-width: 20px;
   height: 20px;
-  border-radius: 50%;
+  padding: 0 6px;
+  border-radius: 10px;
   display: flex;
   justify-content: center;
   align-items: center;
-  border: 2px solid var(--color-bg);
-
-  /* Логіка анімації появи */
+  border: 2px solid white;
+  box-shadow: 0 2px 8px rgba(244, 63, 94, 0.4);
   transform: scale(0);
-  transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
-/* Клас для видимості badge */
 .badge.is-visible {
   transform: scale(1);
 }
 
-/* Анімація "Pop" */
 @keyframes pop-animation {
   0% { transform: scale(1); }
-  50% { transform: scale(1.4); } /* Підстрибуємо */
+  50% { transform: scale(1.5); }
   100% { transform: scale(1); }
 }
 
 .badge.pop {
-  animation: pop-animation 0.3s ease-out;
+  animation: pop-animation 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
+/* Desktop badge */
+.desktop-badge {
+  background: linear-gradient(135deg, #f43f5e 0%, #e11d48 100%);
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 700;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 10px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-left: 8px;
+}
 
-/* --- Гамбургер-меню --- */
+/* Mobile badge */
+.mobile-badge {
+  background: rgba(255, 255, 255, 0.9);
+  color: #667eea;
+  font-size: 0.875rem;
+  font-weight: 700;
+  min-width: 24px;
+  height: 24px;
+  padding: 0 8px;
+  border-radius: 12px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-left: auto;
+}
+
+/* Гамбургер-меню */
 .mobile-menu-button {
-  display: flex; /* Показуємо на мобільних */
+  display: flex;
   flex-direction: column;
   justify-content: space-around;
-  width: 24px;
-  height: 24px;
+  width: 28px;
+  height: 28px;
   background: transparent;
   border: none;
   cursor: pointer;
   padding: 0;
-  z-index: 1002; /* Вище, ніж хедер, але нижче, ніж меню */
-}
-
-.mobile-menu-button span {
-  width: 24px;
-  height: 2px;
-  background-color: var(--color-text);
-  border-radius: 10px;
-  transition: all 0.3s cubic-bezier(0.19, 1, 0.22, 1);
+  z-index: 1002;
   position: relative;
 }
 
-/* Анімація "хрестика" */
-.mobile-menu-button.is-active span:nth-child(1) {
-  transform: rotate(45deg) translate(5px, 5px);
-}
-.mobile-menu-button.is-active span:nth-child(2) {
-  opacity: 0;
-  transform: translateX(-20px);
-}
-.mobile-menu-button.is-active span:nth-child(3) {
-  transform: rotate(-45deg) translate(5px, -5px);
+.mobile-menu-button span {
+  width: 28px;
+  height: 3px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 10px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
 }
 
-/* --- Повноекранне мобільне меню --- */
+.mobile-menu-button.is-active span:nth-child(1) {
+  transform: rotate(45deg) translate(7px, 7px);
+}
+
+.mobile-menu-button.is-active span:nth-child(2) {
+  opacity: 0;
+  transform: translateX(-30px);
+}
+
+.mobile-menu-button.is-active span:nth-child(3) {
+  transform: rotate(-45deg) translate(7px, -7px);
+}
+
+/* Мобільне меню */
 .mobile-menu {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
-  height: 100%;
-  background-color: rgba(255, 255, 255, 0.98);
-  backdrop-filter: blur(10px);
+  height: 100vh;
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.98) 0%, rgba(118, 75, 162, 0.98) 100%);
+  backdrop-filter: blur(20px);
   z-index: 1001;
   display: flex;
-  flex-direction: column;
-  justify-content: center;
   align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.mobile-menu-content {
+  display: flex;
+  flex-direction: column;
   gap: 2rem;
+  padding: 2rem;
+  width: 100%;
+  max-width: 400px;
 }
 
 .mobile-nav-link {
-  color: var(--color-text);
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  color: white;
   text-decoration: none;
-  font-size: 2rem; /* 32px */
-  font-weight: 600;
-  transition: color 0.3s ease;
-}
-.mobile-nav-link:hover {
-  color: var(--color-primary);
+  font-size: 2rem;
+  font-weight: 700;
+  padding: 1.5rem;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 1rem;
+  backdrop-filter: blur(10px);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transform: translateY(0);
 }
 
-/* Анімація появи мобільного меню */
+.mobile-nav-link:hover,
+.mobile-nav-link.router-link-active {
+  background: rgba(255, 255, 255, 0.25);
+  border-color: rgba(255, 255, 255, 0.5);
+  transform: translateX(10px);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+}
+
+.mobile-link-icon {
+  font-size: 2rem;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+}
+
+.mobile-link-text {
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+}
+
 .mobile-menu-fade-enter-active,
 .mobile-menu-fade-leave-active {
-  transition: opacity 0.3s ease;
+  transition: opacity 0.3s ease, transform 0.3s ease;
 }
-.mobile-menu-fade-enter-from,
+
+.mobile-menu-fade-enter-from {
+  opacity: 0;
+  transform: scale(0.95);
+}
+
 .mobile-menu-fade-leave-to {
   opacity: 0;
+  transform: scale(1.05);
 }
 
-
-/* --- Медіа-запит для ПК (desktop) --- */
+/* Desktop стилі */
 @media (min-width: 768px) {
   .nav-links-desktop {
     display: flex;
-    gap: 1.5rem; /* 24px */
+    gap: 0.5rem;
+    align-items: center;
   }
 
   .nav-link {
-    color: var(--color-text-light);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #495057;
     text-decoration: none;
-    font-weight: 500;
-    padding: 5px;
+    font-weight: 600;
+    font-size: 1rem;
+    padding: 0.75rem 1.25rem;
+    border-radius: 12px;
     position: relative;
-    transition: color 0.3s ease;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    background: transparent;
   }
-  .nav-link:hover {
-    color:lightblue;
 
+  .link-icon {
+    font-size: 1.25rem;
+    transition: transform 0.3s ease;
   }
-  /* Анімація підкреслення */
-  .nav-link span {
+
+  .link-text {
     position: relative;
   }
-  .nav-link span::after {
+
+  .link-text::after {
     content: '';
     position: absolute;
-    bottom: -6px;
+    bottom: -4px;
     left: 0;
     width: 100%;
     height: 2px;
-    background-color: lightblue;
-    color: white;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     transform: scaleX(0);
     transform-origin: left;
-    transition: transform 0.3s cubic-bezier(0.19, 1, 0.22, 1);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
-  .nav-link:hover span::after,
-  .nav-link.router-link-active span::after {
+
+  .nav-link:hover {
+    color: #667eea;
+    background: rgba(102, 126, 234, 0.08);
+  }
+
+  .nav-link:hover .link-icon {
+    transform: scale(1.2);
+  }
+
+  .nav-link:hover .link-text::after {
     transform: scaleX(1);
   }
+
   .nav-link.router-link-active {
-      color: var(--color-text);
-      font-weight: 600;
+    color: #667eea;
+    background: rgba(102, 126, 234, 0.12);
+  }
+
+  .nav-link.router-link-active .link-text::after {
+    transform: scaleX(1);
   }
 
   .nav-icons {
-    gap: 1.5rem; /* 24px */
+    gap: 1rem;
   }
 
   .profile-icon {
-    display: block; /* Показуємо "Профіль" тільки на ПК */
+    display: block;
   }
 
   .mobile-menu-button {
-    display: none; /* Ховаємо гамбургер на ПК */
+    display: none;
   }
-  .mobile-menu {
-    display: none; /* Ховаємо мобільне меню на ПК */
+}
+
+@media (min-width: 1024px) {
+  .nav-links-desktop {
+    gap: 1rem;
+  }
+
+  .nav-link {
+    padding: 0.875rem 1.5rem;
   }
 }
 </style>
