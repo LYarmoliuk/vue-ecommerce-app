@@ -339,11 +339,13 @@ watch(
 .in-stock {
   color: #10b981;
   font-weight: 600;
+
 }
 
 .out-of-stock {
   color: #ef4444;
   font-weight: 600;
+  margin-left: 7px;
 }
 
 /* Великі кнопки */

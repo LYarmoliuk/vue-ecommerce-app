@@ -19,7 +19,7 @@
             <a href="https://github.com/LYarmoliuk">GitHub: LYarmoliuk</a>
           </li>
           <li>
-            <strong>Лазарєв Владислав (Developer)</strong><br>
+            <strong>Сусла Владислав (Developer)</strong><br>
             <a href="https://github.com/Vlad8800">GitHub: Vlad8800</a>
           </li>
               <li>
@@ -40,7 +40,7 @@
 
     </div>
     <div class="footer-bottom">
-      &copy; {{ new Date().getFullYear() }} E-Shop. Всі права захищено.
+      &copy; {{ new Date().getFullYear() }} Lino. Всі права захищено.
     </div>
   </footer>
 </template>

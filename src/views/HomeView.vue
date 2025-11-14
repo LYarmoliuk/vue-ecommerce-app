@@ -1,7 +1,7 @@
 <template>
   <div class="home-view">
     <div class="header">
-      <h1 class="title">🛍️ Ласкаво просимо до E-Shop!</h1>
+      <h1 class="title">🛍️ Ласкаво просимо до Lino!</h1>
       <p class="subtitle">Перегляньте наші найкращі товари 👇</p>
     </div>
 
@@ -15,6 +15,7 @@
       </aside>
 
       <main class="content">
+
         <!-- Додамо перевірку стану завантаження та помилок -->
         <div v-if="productsStore.loading" class="loading-state">
           <p>🔄 Завантаження товарів...</p>
@@ -29,9 +30,7 @@
           <!-- Інформація про фільтри та пагінацію -->
           <div class="results-info">
             <p>Знайдено товарів: {{ productsStore.filteredProducts.length }}</p>
-            <p v-if="productsStore.pagination.totalPages > 1">
-              Сторінка {{ productsStore.pagination.currentPage }} з {{ productsStore.pagination.totalPages }}
-            </p>
+
           </div>
 
           <ProductList
@@ -210,7 +209,7 @@ watch(
 
 <style scoped>
 .home-view {
-  padding: 40px 20px;
+  padding: 20px;
   max-width: 1400px;
   margin: 0 auto;
   position: relative;
@@ -218,7 +217,7 @@ watch(
 
 .header {
   text-align: center;
-  margin-bottom: 40px;
+  margin-bottom: 32px;
 }
 
 .title {
@@ -237,6 +236,7 @@ watch(
   display: grid;
   grid-template-columns: 280px 1fr;
   gap: 32px;
+  align-items: start;
 }
 
 .loading-state, .error-state {
@@ -261,6 +261,7 @@ watch(
 
 .results-info {
   margin-bottom: 20px;
+  margin-right: 300px;
   padding: 10px;
   background: #f8fafc;
   border-radius: 8px;

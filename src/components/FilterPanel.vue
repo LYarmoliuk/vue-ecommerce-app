@@ -88,6 +88,10 @@ const updateFilter = (key: keyof Filters, value: string | number) => {
   border-radius: 12px;
   border: 1px solid #e2e8f0;
   height: fit-content;
+  position: sticky;
+  top: 20px;
+  align-self: flex-start;
+   transform: translateY(73px);
 }
 .filter-title {
   font-size: 1.5rem;
@@ -96,13 +100,15 @@ const updateFilter = (key: keyof Filters, value: string | number) => {
   color: #1e293b;
 }
 .filter-group {
-  margin-bottom: 20px;
+  margin-right: 24px;
+  margin-block: 24px;
 }
 .filter-group label {
   display: block;
   font-weight: 600;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
   color: #475569;
+  font-size: 0.95rem;
 }
 input[type='text'],
 input[type='number'],
@@ -112,6 +118,7 @@ select {
   border: 1px solid #cbd5e1;
   border-radius: 8px;
   font-size: 1rem;
+  left: 100px;
 }
 .price-group .price-inputs {
   display: flex;
