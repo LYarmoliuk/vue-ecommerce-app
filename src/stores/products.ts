@@ -1,7 +1,12 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import type { Product, ProductFilters, Pagination } from '@/types';
-import { getProducts, getProductsByCategory, getProductById } from '@/api/productsApi';
+import {
+  getProductsByCategory,
+  getProductsWithCache,
+  getProductByIdWithCache
+} from '@/api/productsApi';
+import { debounce } from '@/utils/debounce';
 
 export const useProductsStore = defineStore('products', () => {
   // State
@@ -9,36 +14,26 @@ export const useProductsStore = defineStore('products', () => {
   const loading = ref(false);
   const error = ref<string | null>(null);
   const filters = ref<ProductFilters>({});
-  const selectedProduct = ref<Product | null>(null); // <-- ДОДАНО
+  const selectedProduct = ref<Product | null>(null);
 
   // Пагінація
   const pagination = ref<Pagination>({
     currentPage: 1,
-    itemsPerPage: 8, // Зменшимо для демонстрації пагінації
+    itemsPerPage: 8,
     totalItems: 0,
     totalPages: 0
   });
-
-  // Додай цей метод для дебагу
-  const debugProducts = () => {
-    console.log('Products in store:', products.value);
-    console.log('Filtered products:', filteredProducts.value);
-    console.log('Paginated products:', paginatedProducts.value);
-    console.log('Pagination:', pagination.value);
-  };
 
   // Getters
   const filteredProducts = computed(() => {
     let filtered = [...products.value];
 
-    // Фільтрація по категорії
     if (filters.value.category) {
       filtered = filtered.filter(product =>
         product.category === filters.value.category
       );
     }
 
-    // Фільтрація по ціні
     if (filters.value.minPrice !== undefined) {
       filtered = filtered.filter(product =>
         product.price >= filters.value.minPrice!
@@ -51,21 +46,18 @@ export const useProductsStore = defineStore('products', () => {
       );
     }
 
-    // Фільтрація по рейтингу
     if (filters.value.minRating !== undefined) {
       filtered = filtered.filter(product =>
         product.rating.rate >= filters.value.minRating!
       );
     }
 
-    // Фільтрація по наявності
     if (filters.value.inStock !== undefined) {
       filtered = filtered.filter(product =>
         product.inStock === filters.value.inStock
       );
     }
 
-    // Фільтрація по пошуковому запиту
     if (filters.value.searchQuery) {
       const searchLower = filters.value.searchQuery.toLowerCase();
       filtered = filtered.filter(product =>
@@ -74,7 +66,6 @@ export const useProductsStore = defineStore('products', () => {
       );
     }
 
-    // Сортування
     if (filters.value.sortBy) {
       filtered.sort((a, b) => {
         let aValue: string | number;
@@ -114,22 +105,28 @@ export const useProductsStore = defineStore('products', () => {
   });
 
   // Actions
-  const fetchProducts = async () => {
-    loading.value = true;
-    error.value = null;
+ const fetchProducts = async (forceRefresh = false) => {
+  // Перевірка чи вже є продукти і не потрібно оновлювати
+  if (products.value.length > 0 && !forceRefresh) {
+    console.log('📦 Products already loaded, skipping API call');
+    updatePagination();
+    return;
+  }
 
-    try {
-      const allProducts = await getProducts();
-      products.value = allProducts;
-      updatePagination();
-      console.log('Products loaded:', allProducts.length);
-    } catch (err) {
-      error.value = 'Не вдалося завантажити товари';
-      console.error('Error fetching products:', err);
-    } finally {
-      loading.value = false;
-    }
-  };
+  loading.value = true;
+  error.value = null;
+
+  try {
+    const allProducts = await getProductsWithCache();
+    products.value = allProducts;
+    updatePagination();
+  } catch (err) {
+    error.value = 'Не вдалося завантажити товари';
+    console.error('Error fetching products:', err);
+  } finally {
+    loading.value = false;
+  }
+};
 
   const fetchProductsByCategory = async (category: string) => {
     loading.value = true;
@@ -146,13 +143,11 @@ export const useProductsStore = defineStore('products', () => {
     }
   };
 
-  // Отримати один товар по ID (ОНОВЛЕНО)
   const fetchProductById = async (id: number): Promise<Product> => {
     loading.value = true;
     error.value = null;
 
     try {
-      // Спершу пробуємо знайти в локальному стані
       const cachedProduct = products.value.find(p => p.id === id);
 
       if (cachedProduct) {
@@ -160,8 +155,7 @@ export const useProductsStore = defineStore('products', () => {
         return cachedProduct;
       }
 
-      // Якщо немає в кеші - завантажуємо з API
-      const product = await getProductById(id);
+      const product = await getProductByIdWithCache(id);
       selectedProduct.value = product;
       return product;
     } catch (err) {
@@ -173,7 +167,6 @@ export const useProductsStore = defineStore('products', () => {
     }
   };
 
-  // Отримати товар з локального стану (якщо він вже завантажений)
   const getProductFromState = (id: number): Product | undefined => {
     return products.value.find(p => p.id === id);
   };
@@ -185,6 +178,11 @@ export const useProductsStore = defineStore('products', () => {
     updatePagination();
   };
 
+  // Debounced version - ВИПРАВЛЕНО (тепер всередині store)
+  const debouncedApplyFilters = debounce((newFilters: ProductFilters) => {
+    applyFilters(newFilters);
+  }, 300);
+
   const clearFilters = () => {
     filters.value = {};
     pagination.value.currentPage = 1;
@@ -192,7 +190,6 @@ export const useProductsStore = defineStore('products', () => {
   };
 
   const setPage = (page: number) => {
-    console.log('Setting page to:', page);
     if (page >= 1 && page <= pagination.value.totalPages) {
       pagination.value.currentPage = page;
     }
@@ -216,20 +213,20 @@ export const useProductsStore = defineStore('products', () => {
       pagination.value.totalItems / pagination.value.itemsPerPage
     );
 
-    // Корекція поточної сторінки, якщо вона виходить за межі
     if (pagination.value.currentPage > pagination.value.totalPages) {
       pagination.value.currentPage = Math.max(1, pagination.value.totalPages);
     }
-
-    console.log('Pagination updated:', {
-      currentPage: pagination.value.currentPage,
-      totalPages: pagination.value.totalPages,
-      totalItems: pagination.value.totalItems
-    });
   };
 
   const clearError = () => {
     error.value = null;
+  };
+
+  const debugProducts = () => {
+    console.log('Products in store:', products.value);
+    console.log('Filtered products:', filteredProducts.value);
+    console.log('Paginated products:', paginatedProducts.value);
+    console.log('Pagination:', pagination.value);
   };
 
   return {
@@ -239,7 +236,7 @@ export const useProductsStore = defineStore('products', () => {
     error: computed(() => error.value),
     filters: computed(() => filters.value),
     pagination: computed(() => pagination.value),
-    selectedProduct: computed(() => selectedProduct.value), // <-- ДОДАНО
+    selectedProduct: computed(() => selectedProduct.value),
 
     // Getters
     filteredProducts,
@@ -251,6 +248,7 @@ export const useProductsStore = defineStore('products', () => {
     fetchProductById,
     getProductFromState,
     applyFilters,
+    debouncedApplyFilters, // Додано debounced версію
     clearFilters,
     setPage,
     nextPage,

@@ -143,6 +143,42 @@ export interface Notification {
   createdAt: string;
 }
 
+// Додати до існуючих типів
+export interface ImageSizes {
+  thumbnail?: string;
+  medium?: string;
+  large?: string;
+}
+
+export interface PaginatedResponse<T> {
+  data: T[];
+  currentPage: number;
+  totalPages: number;
+  totalItems: number;
+  hasNext: boolean;
+  hasPrev: boolean;
+}
+
+export interface CacheStats {
+  size: number;
+  hits: number;
+  misses: number;
+}
+// Додати в @/types/index.ts
+export interface ImageSizes {
+  thumbnail?: string;
+  medium?: string;
+  large?: string;
+}
+
+export interface PaginatedResponse<T> {
+  data: T[];
+  currentPage: number;
+  totalPages: number;
+  totalItems: number;
+  hasNext: boolean;
+  hasPrev: boolean;
+}
 // Модальні вікна
 export interface Modal {
   id: string;
@@ -168,4 +204,9 @@ export interface SiteConfig {
     phone: string;
     address: string;
   };
+}
+export interface LocalStorageCacheItem<T> {
+  data: T;
+  timestamp: number;
+  ttl: number;
 }
