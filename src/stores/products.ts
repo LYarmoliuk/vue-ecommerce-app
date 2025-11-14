@@ -9,6 +9,7 @@ export const useProductsStore = defineStore('products', () => {
   const loading = ref(false);
   const error = ref<string | null>(null);
   const filters = ref<ProductFilters>({});
+  const selectedProduct = ref<Product | null>(null); // <-- ДОДАНО
 
   // Пагінація
   const pagination = ref<Pagination>({
@@ -145,13 +146,23 @@ export const useProductsStore = defineStore('products', () => {
     }
   };
 
-  // Отримати один товар по ID
+  // Отримати один товар по ID (ОНОВЛЕНО)
   const fetchProductById = async (id: number): Promise<Product> => {
     loading.value = true;
     error.value = null;
 
     try {
+      // Спершу пробуємо знайти в локальному стані
+      const cachedProduct = products.value.find(p => p.id === id);
+
+      if (cachedProduct) {
+        selectedProduct.value = cachedProduct;
+        return cachedProduct;
+      }
+
+      // Якщо немає в кеші - завантажуємо з API
       const product = await getProductById(id);
+      selectedProduct.value = product;
       return product;
     } catch (err) {
       error.value = `Не вдалося завантажити товар #${id}`;
@@ -228,6 +239,7 @@ export const useProductsStore = defineStore('products', () => {
     error: computed(() => error.value),
     filters: computed(() => filters.value),
     pagination: computed(() => pagination.value),
+    selectedProduct: computed(() => selectedProduct.value), // <-- ДОДАНО
 
     // Getters
     filteredProducts,
