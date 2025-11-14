@@ -45,6 +45,7 @@
                 <button
                   @click="addToCart(product)"
                   class="quick-add-btn"
+                  :disabled="!product.inStock"
                 >
                   Швидке додавання
                 </button>
@@ -64,9 +65,12 @@
                   <button
                     @click="addToCart(product)"
                     class="add-to-cart-btn"
+                    :disabled="!product.inStock"
                   >
                     <span class="btn-icon">🛒</span>
-                    <span class="btn-text">В кошик</span>
+                    <span class="btn-text">
+                      {{ product.inStock ? 'В кошик' : 'Недоступно' }}
+                    </span>
                   </button>
                   <button
                     @click="favoritesStore.removeFromFavorites(product.id)"
@@ -93,6 +97,10 @@ const favoritesStore = useFavoritesStore();
 const cartStore = useCartStore();
 
 const addToCart = (product: Product) => {
+  if (!product.inStock) {
+    alert(`${product.title} недоступний для замовлення.`);
+    return;
+  }
   cartStore.addToCart(product);
   alert(`${product.title} додано в кошик!`);
 };
@@ -343,9 +351,15 @@ const getProductWord = (count: number) => {
   transform: translateY(0);
 }
 
-.quick-add-btn:hover {
+.quick-add-btn:hover:not(:disabled) {
   background: #667eea;
   color: white;
+}
+
+.quick-add-btn:disabled {
+  background: #9ca3af;
+  color: #6b7280;
+  cursor: not-allowed;
 }
 
 .product-info {
@@ -416,9 +430,15 @@ const getProductWord = (count: number) => {
   box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
 }
 
-.add-to-cart-btn:hover {
+.add-to-cart-btn:hover:not(:disabled) {
   transform: translateY(-2px);
   box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
+}
+
+.add-to-cart-btn:disabled {
+  background: linear-gradient(135deg, #9ca3af 0%, #6b7280 100%);
+  cursor: not-allowed;
+  box-shadow: none;
 }
 
 .btn-icon {

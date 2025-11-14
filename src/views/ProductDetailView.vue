@@ -1,33 +1,27 @@
 <template>
   <div class="product-detail">
     <div class="container">
-      <!-- Breadcrumbs -->
       <nav class="breadcrumb">
         <router-link to="/">Головна</router-link> /
         <span>{{ product?.title || 'Завантаження...' }}</span>
       </nav>
 
-      <!-- Завантаження -->
       <div v-if="loading" class="loading">
         <p>Завантаження деталей товару...</p>
       </div>
 
-      <!-- Помилка -->
       <div v-else-if="error" class="error">
         <p>{{ error }}</p>
         <button @click="retryLoading" class="retry-btn">Спробувати знову</button>
       </div>
 
-      <!-- Товар не знайдено -->
-      <div v-else-if="!product" class="not-found">
+      <div v-else-if="!product && !loading" class="not-found">
         <h2>Товар не знайдено</h2>
         <router-link to="/" class="back-link">← Повернутися до магазину</router-link>
       </div>
 
-      <!-- Контент товару -->
-      <div v-else class="product-content">
+      <div v-else-if="product" class="product-content">
         <div class="product-layout">
-          <!-- Галерея фото -->
           <div class="gallery-section">
             <div class="main-image">
               <img :src="currentImage" :alt="product.title" />
@@ -45,25 +39,20 @@
             </div>
           </div>
 
-          <!-- Інформація про товар -->
           <div class="info-section">
-            <!-- Назва та ціна -->
             <h1 class="product-title">{{ product.title }}</h1>
             <p class="product-category">{{ formatCategory(product.category) }}</p>
             <p class="product-price">${{ product.price }}</p>
 
-            <!-- Рейтинг -->
             <div class="product-rating">
               ⭐ {{ product.rating.rate }} ({{ product.rating.count }} відгуків)
             </div>
 
-            <!-- Опис -->
             <div class="product-description">
               <h3>Опис</h3>
               <p>{{ product.description }}</p>
             </div>
 
-            <!-- Додаткова інформація -->
             <div class="additional-info">
               <div v-if="product.brand" class="info-item">
                 <strong>Бренд:</strong> {{ product.brand }}
@@ -79,14 +68,13 @@
               </div>
             </div>
 
-            <!-- Великі кнопки дій -->
             <div class="action-buttons">
               <button
                 @click="addToCart"
                 class="add-to-cart-btn"
                 :disabled="!product.inStock"
               >
-                🛒 Додати в кошик
+                {{ product.inStock ? '🛒 Додати в кошик' : '❌ Немає в наявності' }}
               </button>
               <button
                 @click="toggleFavorite"
@@ -104,14 +92,14 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
+import { useRoute } from 'vue-router'; // <--- ЗМІНА: Видалено useRouter
 import { useProductsStore } from '@/stores/products';
 import { useCartStore } from '@/stores/cart';
 import { useFavoritesStore } from '@/stores/favorites';
 import { getProductGallery } from '@/api/productsApi';
 
 const route = useRoute();
-const router = useRouter();
+// <--- ЗМІНА: Видалено const router = useRouter();
 const productsStore = useProductsStore();
 const cartStore = useCartStore();
 const favoritesStore = useFavoritesStore();
@@ -123,10 +111,8 @@ const galleryImages = ref<string[]>([]);
 
 const productId = computed(() => Number(route.params.id));
 
-// Спроба отримати товар з існуючого стану
-const product = computed(() => {
-  return productsStore.getProductFromState(productId.value);
-});
+// <--- ЗМІНА: Тепер посилається на новий selectedProduct зі стору
+const product = computed(() => productsStore.selectedProduct);
 
 const isFavorite = computed(() => {
   return favoritesStore.isFavorite(productId.value);
@@ -140,24 +126,21 @@ const formatCategory = (category: string) => {
   return categoryMap[category] || category;
 };
 
+// <--- ЗМІНА: Логіка спрощена, бо fetchProductById зі стору
+// тепер сам обробляє кешування і встановлює selectedProduct
 const loadProduct = async () => {
   loading.value = true;
   error.value = null;
 
   try {
-    // Спершу пробуємо знайти товар в існуючому стані
-    let productData = productsStore.getProductFromState(productId.value);
-
-    // Якщо товара немає в стані, завантажуємо його
-    if (!productData) {
-      productData = await productsStore.fetchProductById(productId.value);
-    }
+    // Ця дія тепер сама знаходить/завантажує товар
+    // і встановлює 'selectedProduct' у сторі
+    const productData = await productsStore.fetchProductById(productId.value);
 
     // Завантажуємо галерею фото
-    if (productData) {
-      galleryImages.value = await getProductGallery(productId.value);
-      currentImage.value = galleryImages.value[0] || productData.image;
-    }
+    galleryImages.value = await getProductGallery(productId.value);
+    currentImage.value = galleryImages.value[0] || productData.image;
+
   } catch (err) {
     error.value = 'Не вдалося завантажити товар';
     console.error('Error loading product:', err);
@@ -166,11 +149,17 @@ const loadProduct = async () => {
   }
 };
 
+// <--- ЗМІНА: Додано перевірку на успішне додавання
 const addToCart = () => {
   if (!product.value) return;
 
-  cartStore.addToCart(product.value, 1);
-  alert('Товар додано до кошика! 🛒');
+  const success = cartStore.addToCart(product.value, 1);
+  if (success) {
+    alert('Товар додано до кошика! 🛒');
+  } else {
+    // Це спрацює, якщо логіка cartStore поверне false (наприклад, перевірка наявності)
+    alert('❌ Не вдалося додати товар (можливо, немає в наявності)');
+  }
 };
 
 const toggleFavorite = () => {

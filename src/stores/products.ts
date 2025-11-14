@@ -97,7 +97,10 @@ export const useProductsStore = defineStore('products', () => {
 
     return filtered;
   });
-
+const validateProductAvailability = (productId: number): boolean => {
+  const product = products.value.find(p => p.id === productId) || selectedProduct.value;
+  return product ? product.inStock : false;
+};
   const paginatedProducts = computed(() => {
     const startIndex = (pagination.value.currentPage - 1) * pagination.value.itemsPerPage;
     const endIndex = startIndex + pagination.value.itemsPerPage;
@@ -255,6 +258,7 @@ export const useProductsStore = defineStore('products', () => {
     previousPage,
     clearError,
     updatePagination,
-    debugProducts
+    debugProducts,
+    validateProductAvailability
   };
 });
