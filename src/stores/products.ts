@@ -1,3 +1,8 @@
+/**
+ * @file Store для управління товарами
+ * @description Керування списком товарів, фільтрами та пагінацією
+ */
+
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import type { Product, ProductFilters, Pagination } from '@/types';
@@ -8,6 +13,9 @@ import {
 } from '@/api/productsApi';
 import { debounce } from '@/utils/debounce';
 
+/**
+ * Store для управління товарами з фільтрацією та пагінацією
+ */
 export const useProductsStore = defineStore('products', () => {
   // State
   const products = ref<Product[]>([]);
@@ -25,6 +33,11 @@ export const useProductsStore = defineStore('products', () => {
   });
 
   // Getters
+
+  /**
+   * Відфільтровані товари з урахуванням поточних фільтрів
+   * @type {ComputedRef<Product[]>}
+   */
   const filteredProducts = computed(() => {
     let filtered = [...products.value];
 
@@ -97,10 +110,21 @@ export const useProductsStore = defineStore('products', () => {
 
     return filtered;
   });
-const validateProductAvailability = (productId: number): boolean => {
-  const product = products.value.find(p => p.id === productId) || selectedProduct.value;
-  return product ? product.inStock : false;
-};
+
+  /**
+   * Перевіряє доступність товару
+   * @param {number} productId - ID товару
+   * @returns {boolean} true якщо товар доступний
+   */
+  const validateProductAvailability = (productId: number): boolean => {
+    const product = products.value.find(p => p.id === productId) || selectedProduct.value;
+    return product ? product.inStock : false;
+  };
+
+  /**
+   * Пагиновані товари для поточної сторінки
+   * @type {ComputedRef<Product[]>}
+   */
   const paginatedProducts = computed(() => {
     const startIndex = (pagination.value.currentPage - 1) * pagination.value.itemsPerPage;
     const endIndex = startIndex + pagination.value.itemsPerPage;
@@ -108,30 +132,43 @@ const validateProductAvailability = (productId: number): boolean => {
   });
 
   // Actions
- const fetchProducts = async (forceRefresh = false) => {
-  // Перевірка чи вже є продукти і не потрібно оновлювати
-  if (products.value.length > 0 && !forceRefresh) {
-    console.log('📦 Products already loaded, skipping API call');
-    updatePagination();
-    return;
-  }
 
-  loading.value = true;
-  error.value = null;
+  /**
+   * Завантажує товари з API з кешуванням
+   * @async
+   * @param {boolean} [forceRefresh=false] - Примусове оновлення даних
+   * @returns {Promise<void>}
+   */
+  const fetchProducts = async (forceRefresh = false): Promise<void> => {
+    // Перевірка чи вже є продукти і не потрібно оновлювати
+    if (products.value.length > 0 && !forceRefresh) {
+      console.log('📦 Products already loaded, skipping API call');
+      updatePagination();
+      return;
+    }
 
-  try {
-    const allProducts = await getProductsWithCache();
-    products.value = allProducts;
-    updatePagination();
-  } catch (err) {
-    error.value = 'Не вдалося завантажити товари';
-    console.error('Error fetching products:', err);
-  } finally {
-    loading.value = false;
-  }
-};
+    loading.value = true;
+    error.value = null;
 
-  const fetchProductsByCategory = async (category: string) => {
+    try {
+      const allProducts = await getProductsWithCache();
+      products.value = allProducts;
+      updatePagination();
+    } catch (err) {
+      error.value = 'Не вдалося завантажити товари';
+      console.error('Error fetching products:', err);
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  /**
+   * Завантажує товари за категорією
+   * @async
+   * @param {string} category - Категорія товарів
+   * @returns {Promise<void>}
+   */
+  const fetchProductsByCategory = async (category: string): Promise<void> => {
     loading.value = true;
     error.value = null;
 
@@ -146,6 +183,13 @@ const validateProductAvailability = (productId: number): boolean => {
     }
   };
 
+  /**
+   * Завантажує конкретний товар по ID
+   * @async
+   * @param {number} id - ID товару
+   * @returns {Promise<Product>} Об'єкт товару
+   * @throws {Error} Помилка завантаження
+   */
   const fetchProductById = async (id: number): Promise<Product> => {
     loading.value = true;
     error.value = null;
@@ -170,47 +214,82 @@ const validateProductAvailability = (productId: number): boolean => {
     }
   };
 
+  /**
+   * Отримує товар з локального стану по ID
+   * @param {number} id - ID товару
+   * @returns {Product | undefined} Об'єкт товару або undefined
+   */
   const getProductFromState = (id: number): Product | undefined => {
     return products.value.find(p => p.id === id);
   };
 
-  const applyFilters = (newFilters: ProductFilters) => {
+  /**
+   * Застосовує фільтри до списку товарів
+   * @param {ProductFilters} newFilters - Нові фільтри
+   * @returns {void}
+   */
+  const applyFilters = (newFilters: ProductFilters): void => {
     console.log('Applying filters:', newFilters);
     filters.value = { ...filters.value, ...newFilters };
     pagination.value.currentPage = 1;
     updatePagination();
   };
 
-  // Debounced version - ВИПРАВЛЕНО (тепер всередині store)
-  const debouncedApplyFilters = debounce((newFilters: ProductFilters) => {
-    applyFilters(newFilters);
-  }, 300);
+  /**
+   * Дебаунс версія застосування фільтрів
+   * @type {Function}
+   */
+ // Debounced version - ВИПРАВЛЕНО (правильна типізація)
+const debouncedApplyFilters = debounce((newFilters: ProductFilters) => {
+  applyFilters(newFilters);
+}, 300);
 
-  const clearFilters = () => {
+  /**
+   * Очищає всі фільтри
+   * @returns {void}
+   */
+  const clearFilters = (): void => {
     filters.value = {};
     pagination.value.currentPage = 1;
     updatePagination();
   };
 
-  const setPage = (page: number) => {
+  /**
+   * Встановлює поточну сторінку пагінації
+   * @param {number} page - Номер сторінки
+   * @returns {void}
+   */
+  const setPage = (page: number): void => {
     if (page >= 1 && page <= pagination.value.totalPages) {
       pagination.value.currentPage = page;
     }
   };
 
-  const nextPage = () => {
+  /**
+   * Переходить на наступну сторінку
+   * @returns {void}
+   */
+  const nextPage = (): void => {
     if (pagination.value.currentPage < pagination.value.totalPages) {
       pagination.value.currentPage++;
     }
   };
 
-  const previousPage = () => {
+  /**
+   * Переходить на попередню сторінку
+   * @returns {void}
+   */
+  const previousPage = (): void => {
     if (pagination.value.currentPage > 1) {
       pagination.value.currentPage--;
     }
   };
 
-  const updatePagination = () => {
+  /**
+   * Оновлює пагінацію на основі відфільтрованих товарів
+   * @returns {void}
+   */
+  const updatePagination = (): void => {
     pagination.value.totalItems = filteredProducts.value.length;
     pagination.value.totalPages = Math.ceil(
       pagination.value.totalItems / pagination.value.itemsPerPage
@@ -221,11 +300,19 @@ const validateProductAvailability = (productId: number): boolean => {
     }
   };
 
-  const clearError = () => {
+  /**
+   * Очищає помилки
+   * @returns {void}
+   */
+  const clearError = (): void => {
     error.value = null;
   };
 
-  const debugProducts = () => {
+  /**
+   * Виводить відлагоджувальну інформацію про товари
+   * @returns {void}
+   */
+  const debugProducts = (): void => {
     console.log('Products in store:', products.value);
     console.log('Filtered products:', filteredProducts.value);
     console.log('Paginated products:', paginatedProducts.value);

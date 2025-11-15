@@ -61,7 +61,7 @@ import { useRoute, useRouter } from 'vue-router';
 import { useProductsStore } from '@/stores/products';
 import ProductList from '@/components/ProductList.vue';
 import FilterPanel from '@/components/FilterPanel.vue';
-import Pagination from '@/components/Pagination.vue';
+import Pagination from '@/components/AppPagination.vue';
 
 const route = useRoute();
 const router = useRouter();

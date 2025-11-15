@@ -1,8 +1,8 @@
 export class ApiCache {
-  private cache = new Map<string, { data: any; timestamp: number }>();
+  private cache = new Map<string, { data: unknown; timestamp: number }>();
   private defaultTTL = 5 * 60 * 1000; // 5 хвилин
 
-  set(key: string, data: any, ttl: number = this.defaultTTL): void {
+  set(key: string, data: unknown, ttl: number = this.defaultTTL): void {
     this.cache.set(key, { data, timestamp: Date.now() + ttl });
   }
 

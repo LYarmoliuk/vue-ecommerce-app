@@ -1,14 +1,25 @@
+/**
+ * @file Store для управління кошиком
+ * @description Керування товарами в кошику з перевіркою доступності та persistence
+ */
+
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import type { CartItem, Product } from '@/types';
 import { storage, STORAGE_KEYS } from '@/utils/localStorage';
 
+/**
+ * Store для управління кошиком з перевіркою доступності товарів
+ */
 export const useCartStore = defineStore('cart', () => {
   // State
   const items = ref<CartItem[]>([]);
 
-  // Завантажити кошик з localStorage при ініціалізації
-  const loadFromStorage = () => {
+  /**
+   * Завантажує кошик з localStorage при ініціалізації
+   * @returns {void}
+   */
+  const loadFromStorage = (): void => {
     const savedCart = storage.get<CartItem[]>(STORAGE_KEYS.CART, []);
     items.value = savedCart;
 
@@ -21,33 +32,62 @@ export const useCartStore = defineStore('cart', () => {
     }
   };
 
-  // Зберегти кошик в localStorage
-  const saveToStorage = () => {
+  /**
+   * Зберігає кошик в localStorage
+   * @returns {void}
+   */
+  const saveToStorage = (): void => {
     storage.set(STORAGE_KEYS.CART, items.value);
   };
 
   // Getters
+
+  /**
+   * Загальна сума кошика
+   * @type {ComputedRef<number>}
+   */
   const total = computed(() => {
     return items.value.reduce((sum: number, item: CartItem) => {
       return sum + (item.product.price * item.quantity);
     }, 0);
   });
 
+  /**
+   * Загальна кількість товарів в кошику
+   * @type {ComputedRef<number>}
+   */
   const totalItems = computed(() => {
     return items.value.reduce((sum: number, item: CartItem) => sum + item.quantity, 0);
   });
 
-  const isInCart = computed(() => (productId: number) => {
+  /**
+   * Перевіряє чи товар є в кошику
+   * @type {ComputedRef<(productId: number) => boolean>}
+   */
+  const isInCart = computed(() => (productId: number): boolean => {
     return items.value.some(item => item.product.id === productId);
   });
 
-  const getItemQuantity = computed(() => (productId: number) => {
+  /**
+   * Отримує кількість товару в кошику
+   * @type {ComputedRef<(productId: number) => number>}
+   */
+  const getItemQuantity = computed(() => (productId: number): number => {
     const item = items.value.find(item => item.product.id === productId);
     return item ? item.quantity : 0;
   });
 
   // Actions
-  const addToCart = (product: Product, quantity: number = 1, size?: string, color?: string) => {
+
+  /**
+   * Додає товар в кошик з перевіркою inStock статусу
+   * @param {Product} product - Товар для додавання
+   * @param {number} [quantity=1] - Кількість товару
+   * @param {string} [size] - Розмір товару
+   * @param {string} [color] - Колір товару
+   * @returns {boolean} true якщо товар додано, false якщо недоступний
+   */
+  const addToCart = (product: Product, quantity: number = 1, size?: string, color?: string): boolean => {
     // 🔒 ЗАХИСТ: Перевірка чи товар в наявності
     if (!product.inStock) {
       console.warn(`🚫 Cannot add out-of-stock product: ${product.title}`);
@@ -80,7 +120,14 @@ export const useCartStore = defineStore('cart', () => {
     return true;
   };
 
-  const removeFromCart = (productId: number, size?: string, color?: string) => {
+  /**
+   * Видаляє товар з кошика
+   * @param {number} productId - ID товару
+   * @param {string} [size] - Розмір товару
+   * @param {string} [color] - Колір товару
+   * @returns {void}
+   */
+  const removeFromCart = (productId: number, size?: string, color?: string): void => {
     const itemIndex = items.value.findIndex(
       item => item.product.id === productId &&
               item.selectedSize === size &&
@@ -93,7 +140,15 @@ export const useCartStore = defineStore('cart', () => {
     }
   };
 
-  const updateQuantity = (productId: number, quantity: number, size?: string, color?: string) => {
+  /**
+   * Оновлює кількість товару в кошику
+   * @param {number} productId - ID товару
+   * @param {number} quantity - Нова кількість
+   * @param {string} [size] - Розмір товару
+   * @param {string} [color] - Колір товару
+   * @returns {boolean} true якщо оновлено, false якщо недоступний
+   */
+  const updateQuantity = (productId: number, quantity: number, size?: string, color?: string): boolean => {
     const item = items.value.find(
       item => item.product.id === productId &&
               item.selectedSize === size &&
@@ -117,7 +172,14 @@ export const useCartStore = defineStore('cart', () => {
     return true;
   };
 
-  const incrementQuantity = (productId: number, size?: string, color?: string) => {
+  /**
+   * Збільшує кількість товару на 1
+   * @param {number} productId - ID товару
+   * @param {string} [size] - Розмір товару
+   * @param {string} [color] - Колір товару
+   * @returns {boolean} true якщо оновлено, false якщо недоступний
+   */
+  const incrementQuantity = (productId: number, size?: string, color?: string): boolean => {
     const item = items.value.find(
       item => item.product.id === productId &&
               item.selectedSize === size &&
@@ -136,7 +198,14 @@ export const useCartStore = defineStore('cart', () => {
     return true;
   };
 
-  const decrementQuantity = (productId: number, size?: string, color?: string) => {
+  /**
+   * Зменшує кількість товару на 1
+   * @param {number} productId - ID товару
+   * @param {string} [size] - Розмір товару
+   * @param {string} [color] - Колір товару
+   * @returns {boolean} true якщо оновлено
+   */
+  const decrementQuantity = (productId: number, size?: string, color?: string): boolean => {
     const item = items.value.find(
       item => item.product.id === productId &&
               item.selectedSize === size &&
@@ -154,12 +223,19 @@ export const useCartStore = defineStore('cart', () => {
     return true;
   };
 
-  const clearCart = () => {
+  /**
+   * Очищає весь кошик
+   * @returns {void}
+   */
+  const clearCart = (): void => {
     items.value = [];
     storage.remove(STORAGE_KEYS.CART);
   };
 
-  // 🔒 Додаткова функція для перевірки всіх товарів в кошику
+  /**
+   * Перевіряє всі товари в кошику на доступність
+   * @returns {boolean} true якщо всі товари доступні
+   */
   const validateCartItems = (): boolean => {
     const invalidItems = items.value.filter(item => !item.product.inStock);
 

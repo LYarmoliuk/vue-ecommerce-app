@@ -9,16 +9,16 @@ const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
 
   // Scroll Behavior - скрол до верху при зміні роуту
-  scrollBehavior(to, from, savedPosition) {
+  scrollBehavior(_to, _from, savedPosition) { // Видалили невикористовувані параметри
     // Якщо є збережена позиція (наприклад, при натисканні "назад"), повертаємося до неї
     if (savedPosition) {
       return savedPosition
     }
 
     // Якщо є хеш, скролимо до елемента
-    if (to.hash) {
+    if (_to.hash) {
       return {
-        el: to.hash,
+        el: _to.hash,
         behavior: 'smooth'
       }
     }
@@ -97,7 +97,7 @@ router.beforeEach((to, from, next) => {
 })
 
 // Глобальний після-гард
-router.afterEach((to, from) => {
+router.afterEach((to) => { // Видалили невикористовуваний параметр _from
   // Можна додати аналітику тут
   console.log(`Успішно перейшли до ${to.path}`)
 })

@@ -2,6 +2,7 @@
 <script setup lang="ts">
 import { RouterLink } from 'vue-router'
 import { ref, watch, onMounted, onBeforeUnmount, computed, provide } from 'vue'
+import type { Product } from '@/types'
 
 // --- Стан меню ---
 const isMobileMenuOpen = ref(false)
@@ -55,7 +56,7 @@ const loadFromLocalStorage = <T>(key: string, defaultValue: T): T => {
   }
 }
 
-const saveToLocalStorage = (key: string, data: any) => {
+const saveToLocalStorage = (key: string, data: unknown): void => {
   try {
     localStorage.setItem(key, JSON.stringify(data))
   } catch (error) {
@@ -77,9 +78,6 @@ const cartCount = computed(() =>
 const wishlistBadgePop = ref(false)
 const cartBadgePop = ref(false)
 
-const isWishlistVisible = computed(() => wishlistCount.value > 0)
-const isCartVisible = computed(() => cartCount.value > 0)
-
 watch(wishlistCount, (newCount, old) => {
   if (newCount > old) {
     wishlistBadgePop.value = true
@@ -95,41 +93,49 @@ watch(cartCount, (newCount, old) => {
 })
 
 // --- Функції для роботи з кошиком та списком бажань ---
-const addToCart = (product: any) => {
+const addToCart = (product: Product): void => {
   const existingItem = cartItems.value.find(item => item.id === product.id)
 
   if (existingItem) {
     existingItem.quantity++
   } else {
     cartItems.value.push({
-      ...product,
+      id: product.id,
+      name: product.title,
+      price: product.price,
+      image: product.image,
       quantity: 1
     })
   }
 
   saveToLocalStorage('cart', cartItems.value)
-  console.log('Додано до кошика:', product.name, 'Кількість:', cartCount.value)
+  console.log('Додано до кошика:', product.title, 'Кількість:', cartCount.value)
 }
 
-const addToWishlist = (product: any) => {
+const addToWishlist = (product: Product): void => {
   const existingItem = wishlistItems.value.find(item => item.id === product.id)
 
   if (!existingItem) {
-    wishlistItems.value.push(product)
+    wishlistItems.value.push({
+      id: product.id,
+      name: product.title,
+      price: product.price,
+      image: product.image
+    })
     saveToLocalStorage('wishlist', wishlistItems.value)
-    console.log('Додано до улюбленого:', product.name, 'Кількість:', wishlistCount.value)
+    console.log('Додано до улюбленого:', product.title, 'Кількість:', wishlistCount.value)
   } else {
-    console.log('Товар вже в улюбленому:', product.name)
+    console.log('Товар вже в улюбленому:', product.title)
   }
 }
 
-const removeFromCart = (productId: number) => {
+const removeFromCart = (productId: number): void => {
   cartItems.value = cartItems.value.filter(item => item.id !== productId)
   saveToLocalStorage('cart', cartItems.value)
   console.log('Видалено з кошика:', productId)
 }
 
-const removeFromWishlist = (productId: number) => {
+const removeFromWishlist = (productId: number): void => {
   wishlistItems.value = wishlistItems.value.filter(item => item.id !== productId)
   saveToLocalStorage('wishlist', wishlistItems.value)
   console.log('Видалено з улюбленого:', productId)

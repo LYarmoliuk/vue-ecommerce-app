@@ -1,31 +1,62 @@
+/**
+ * @file Продукти API з двохрівневим кешуванням
+ * @description Модуль для роботи з товарами з оптимізацією продуктивності
+ */
+
 import type { Product, ProductFilters } from '@/types';
 import { mockClothingProducts } from './mockData';
 import { storage } from '@/utils/localStorage';
 
-// Інтерфейс для кешованих даних
+/**
+ * Інтерфейс для кешованих даних в пам'яті
+ * @interface CacheItem
+ * @template T
+ */
 interface CacheItem<T> {
   data: T;
   timestamp: number;
 }
 
-// Кеш для запитів в пам'яті
+/**
+ * Кеш для запитів в пам'яті з TTL механізмом
+ * @type {Map<string, CacheItem<unknown>>}
+ */
 const apiCache = new Map<string, CacheItem<unknown>>();
-const CACHE_DURATION = 5 * 60 * 1000; // 5 хвилин
 
-// Ключі для localStorage
+/**
+ * Тривалість життя кешу (5 хвилин)
+ * @constant {number}
+ */
+const CACHE_DURATION = 5 * 60 * 1000;
+
+/**
+ * Ключі для localStorage
+ * @constant {Object}
+ */
 const STORAGE_KEYS = {
   PRODUCTS_CACHE: 'vue-ecommerce-products-cache',
   PRODUCT_CACHE: 'vue-ecommerce-product-cache'
 } as const;
 
-// Інтерфейс для localStorage елементів
+/**
+ * Інтерфейс для localStorage елементів
+ * @interface LocalStorageCacheItem
+ * @template T
+ */
 interface LocalStorageCacheItem<T> {
   data: T;
   timestamp: number;
   ttl: number;
 }
 
-// Допоміжні функції для localStorage кешу
+/**
+ * Зберігає дані в localStorage з TTL
+ * @template T
+ * @param {string} key - Ключ для зберігання
+ * @param {T} data - Дані для зберігання
+ * @param {number} [ttl=CACHE_DURATION] - Час життя в мілісекундах
+ * @returns {void}
+ */
 const saveToLocalStorage = <T>(key: string, data: T, ttl: number = CACHE_DURATION): void => {
   const item: LocalStorageCacheItem<T> = {
     data,
@@ -35,8 +66,15 @@ const saveToLocalStorage = <T>(key: string, data: T, ttl: number = CACHE_DURATIO
   storage.set(key, item);
 };
 
+/**
+ * Отримує дані з localStorage з перевіркою TTL
+ * @template T
+ * @param {string} key - Ключ для отримання
+ * @returns {T | null} Дані або null якщо прострочено
+ */
 const getFromLocalStorage = <T>(key: string): T | null => {
-  const item = storage.get<LocalStorageCacheItem<T>>(key, null);
+  // Використовуємо тип, який включає null для defaultValue
+  const item = storage.get<LocalStorageCacheItem<T> | null>(key, null);
   if (!item) return null;
 
   if (Date.now() - item.timestamp > item.ttl) {
@@ -47,17 +85,32 @@ const getFromLocalStorage = <T>(key: string): T | null => {
   return item.data;
 };
 
-// Генерація ключів для кешу
+/**
+ * Генерує ключ кешу для списку товарів
+ * @param {ProductFilters} [filters] - Фільтри товарів
+ * @returns {string} Унікальний ключ кешу
+ */
 const generateProductsCacheKey = (filters?: ProductFilters): string => {
   const baseKey = STORAGE_KEYS.PRODUCTS_CACHE;
   return filters ? `${baseKey}_${JSON.stringify(filters)}` : `${baseKey}_all`;
 };
 
+/**
+ * Генерує ключ кешу для конкретного товару
+ * @param {number} id - ID товару
+ * @returns {string} Унікальний ключ кешу
+ */
 const generateProductCacheKey = (id: number): string => {
   return `${STORAGE_KEYS.PRODUCT_CACHE}_${id}`;
 };
 
-// Базові функції API
+/**
+ * Отримує список товарів з API з підтримкою фільтрації
+ * @async
+ * @param {ProductFilters} [filters] - Фільтри для товарів
+ * @returns {Promise<Product[]>} Масив товарів
+ * @throws {Error} Помилка при завантаженні товарів
+ */
 export const getProducts = async (filters?: ProductFilters): Promise<Product[]> => {
   try {
     return new Promise((resolve) => {
@@ -97,6 +150,13 @@ export const getProducts = async (filters?: ProductFilters): Promise<Product[]> 
   }
 };
 
+/**
+ * Отримує товар по ID з API
+ * @async
+ * @param {number} id - ID товару
+ * @returns {Promise<Product>} Об'єкт товару
+ * @throws {Error} Товар не знайдено
+ */
 export const getProductById = async (id: number): Promise<Product> => {
   try {
     const product = mockClothingProducts.find(p => p.id === id);
@@ -116,7 +176,12 @@ export const getProductById = async (id: number): Promise<Product> => {
   }
 };
 
-// Кешовані версії з двохрівневим кешуванням (пам'ять + localStorage)
+/**
+ * Отримує список товарів з двохрівневим кешуванням
+ * @async
+ * @param {ProductFilters} [filters] - Фільтри для товарів
+ * @returns {Promise<Product[]>} Масив товарів
+ */
 export const getProductsWithCache = async (filters?: ProductFilters): Promise<Product[]> => {
   const cacheKey = generateProductsCacheKey(filters);
 
@@ -147,6 +212,12 @@ export const getProductsWithCache = async (filters?: ProductFilters): Promise<Pr
   return data;
 };
 
+/**
+ * Отримує товар по ID з двохрівневим кешуванням
+ * @async
+ * @param {number} id - ID товару
+ * @returns {Promise<Product>} Об'єкт товару
+ */
 export const getProductByIdWithCache = async (id: number): Promise<Product> => {
   const cacheKey = generateProductCacheKey(id);
 
@@ -177,7 +248,10 @@ export const getProductByIdWithCache = async (id: number): Promise<Product> => {
   return data;
 };
 
-// Функції для управління кешем
+/**
+ * Очищає кеш товарів
+ * @returns {void}
+ */
 export const clearProductsCache = (): void => {
   // Очищаємо пам'ять
   apiCache.clear();
@@ -192,6 +266,10 @@ export const clearProductsCache = (): void => {
   console.log('🗑️ Products cache cleared');
 };
 
+/**
+ * Отримує статистику кешу
+ * @returns {{ memorySize: number; localStorageSize: number }} Статистика кешу
+ */
 export const getCacheStats = (): { memorySize: number; localStorageSize: number } => {
   const memorySize = apiCache.size;
 
@@ -205,7 +283,13 @@ export const getCacheStats = (): { memorySize: number; localStorageSize: number 
   return { memorySize, localStorageSize };
 };
 
-// Оптимізації для зображень
+/**
+ * Отримує оптимізоване зображення товару
+ * @async
+ * @param {number} productId - ID товару
+ * @param {'thumbnail' | 'medium' | 'large'} [size='medium'] - Розмір зображення
+ * @returns {Promise<string>} URL оптимізованого зображення
+ */
 export const getOptimizedImage = async (productId: number, size: 'thumbnail' | 'medium' | 'large' = 'medium'): Promise<string> => {
   const sizes = {
     thumbnail: '200',
@@ -217,6 +301,12 @@ export const getOptimizedImage = async (productId: number, size: 'thumbnail' | '
   return product.image.replace('400', sizes[size]);
 };
 
+/**
+ * Отримує галерею зображень товару
+ * @async
+ * @param {number} productId - ID товару
+ * @returns {Promise<string[]>} Масив URL зображень
+ */
 export const getProductGallery = async (productId: number): Promise<string[]> => {
   const mainProduct = mockClothingProducts.find(p => p.id === productId);
 
@@ -232,6 +322,14 @@ export const getProductGallery = async (productId: number): Promise<string[]> =>
   ];
 };
 
+/**
+ * Отримує пагіновану галерею зображень товару
+ * @async
+ * @param {number} productId - ID товару
+ * @param {number} [page=1] - Номер сторінки
+ * @param {number} [limit=3] - Кількість зображень на сторінці
+ * @returns {Promise<string[]>} Масив URL зображень для поточної сторінки
+ */
 export const getProductGalleryPaginated = async (productId: number, page: number = 1, limit: number = 3): Promise<string[]> => {
   const allImages = await getProductGallery(productId);
   const startIndex = (page - 1) * limit;
@@ -239,18 +337,34 @@ export const getProductGalleryPaginated = async (productId: number, page: number
   return allImages.slice(startIndex, endIndex);
 };
 
-// Інші функції
+/**
+ * Отримує товари за категорією
+ * @async
+ * @param {string} category - Категорія товарів
+ * @returns {Promise<Product[]>} Масив товарів
+ */
 export const getProductsByCategory = async (category: string): Promise<Product[]> => {
   return mockClothingProducts.filter(product =>
     product.category.toLowerCase().includes(category.toLowerCase())
   );
 };
 
+/**
+ * Отримує обмежену кількість товарів
+ * @async
+ * @param {number} [limit=8] - Ліміт товарів
+ * @param {number} [offset=0] - Зміщення
+ * @returns {Promise<Product[]>} Масив товарів
+ */
 export const getLimitedProducts = async (limit: number = 8, offset: number = 0): Promise<Product[]> => {
   return mockClothingProducts.slice(offset, offset + limit);
 };
 
-// Тестові функції для перевірки кешування
+/**
+ * Тестує продуктивність кешування
+ * @async
+ * @returns {Promise<void>}
+ */
 export const testCachePerformance = async (): Promise<void> => {
   console.log('🧪 Testing cache performance...');
 
