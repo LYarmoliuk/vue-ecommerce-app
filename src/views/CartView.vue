@@ -32,15 +32,18 @@
         </div>
 
         <transition-group name="cart-item" tag="div" class="cart-items">
-          <div v-for="item in cartStore.items"
-               :key="`${item.product.id}-${item.selectedSize}-${item.selectedColor}`"
-               class="cart-item">
+          <article
+            v-for="item in cartStore.items"
+            :key="`${item.product.id}-${item.selectedSize}-${item.selectedColor}`"
+            class="cart-item"
+          >
             <div class="item-card">
               <div class="item-image-container">
                 <img
                   :src="item.product.image"
                   :alt="item.product.title"
                   class="item-image"
+                  loading="lazy"
                 >
               </div>
 
@@ -71,6 +74,7 @@
                       @click="cartStore.decrementQuantity(item.product.id, item.selectedSize, item.selectedColor)"
                       class="quantity-btn"
                       :disabled="item.quantity <= 1"
+                      :aria-label="`Зменшити кількість ${item.product.title}`"
                     >
                       <span>−</span>
                     </button>
@@ -80,6 +84,7 @@
                     <button
                       @click="cartStore.incrementQuantity(item.product.id, item.selectedSize, item.selectedColor)"
                       class="quantity-btn"
+                      :aria-label="`Збільшити кількість ${item.product.title}`"
                     >
                       <span>+</span>
                     </button>
@@ -94,14 +99,14 @@
                 <button
                   @click="cartStore.removeFromCart(item.product.id, item.selectedSize, item.selectedColor)"
                   class="remove-btn"
-                  title="Видалити товар"
+                  :aria-label="`Видалити ${item.product.title} з кошика`"
                 >
                   <span class="remove-icon">🗑️</span>
                   <span class="remove-text">Видалити</span>
                 </button>
               </div>
             </div>
-          </div>
+          </article>
         </transition-group>
       </div>
 
@@ -129,7 +134,10 @@
             </div>
           </div>
 
-          <button class="checkout-btn">
+          <button
+            class="checkout-btn"
+            :aria-label="`Оформити замовлення на суму $${cartStore.total.toFixed(2)}`"
+          >
             <span class="checkout-icon">✓</span>
             <span>Оформити замовлення</span>
           </button>
@@ -137,6 +145,7 @@
           <button
             @click="cartStore.clearCart()"
             class="clear-btn"
+            aria-label="Очистити весь кошик"
           >
             <span class="clear-icon">🗑️</span>
             <span>Очистити кошик</span>
@@ -256,6 +265,9 @@ const getItemWord = (count: number) => {
   line-height: 1.6;
 }
 
+/* ==================== */
+/* SHOP LINK HOVER EFFECTS */
+/* ==================== */
 .shop-link {
   display: inline-flex;
   align-items: center;
@@ -268,16 +280,51 @@ const getItemWord = (count: number) => {
   font-weight: 600;
   font-size: 1.125rem;
   box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.shop-link::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.6s ease;
+}
+
+.shop-link:hover::before {
+  left: 100%;
 }
 
 .shop-link:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 25px rgba(102, 126, 234, 0.5);
+  transform: translateY(-3px) scale(1.05);
+  box-shadow:
+    0 8px 25px rgba(102, 126, 234, 0.5),
+    0 0 0 2px rgba(255, 255, 255, 0.2);
+}
+
+.shop-link:active {
+  transform: translateY(-1px) scale(1.02);
+  transition-duration: 0.1s;
+}
+
+.shop-link:focus-visible {
+  outline: 3px solid white;
+  outline-offset: 3px;
+  border-radius: 50px;
 }
 
 .link-icon {
   font-size: 1.5rem;
+  transition: transform 0.3s ease;
+}
+
+.shop-link:hover .link-icon {
+  transform: scale(1.2) rotate(-5deg);
 }
 
 .cart-content {
@@ -295,6 +342,11 @@ const getItemWord = (count: number) => {
   border-radius: 1rem;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
   overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.cart-items-container:hover {
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
 }
 
 .items-header {
@@ -323,6 +375,9 @@ const getItemWord = (count: number) => {
   margin-bottom: 0;
 }
 
+/* ==================== */
+/* ITEM CARD HOVER EFFECTS */
+/* ==================== */
 .item-card {
   background: white;
   border: 2px solid #e5e7eb;
@@ -332,13 +387,37 @@ const getItemWord = (count: number) => {
   grid-template-columns: 120px 1fr auto;
   gap: 1.5rem;
   align-items: center;
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.item-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(102, 126, 234, 0.05), transparent);
+  transition: left 0.6s ease;
+}
+
+.item-card:hover::before {
+  left: 100%;
 }
 
 .item-card:hover {
   border-color: #667eea;
-  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.15);
-  transform: translateY(-2px);
+  box-shadow:
+    0 8px 25px rgba(102, 126, 234, 0.15),
+    0 0 0 1px rgba(102, 126, 234, 0.1);
+  transform: translateY(-4px) scale(1.01);
+}
+
+.item-card:focus-within {
+  outline: 3px solid #667eea;
+  outline-offset: 2px;
 }
 
 .item-image-container {
@@ -346,6 +425,12 @@ const getItemWord = (count: number) => {
   overflow: hidden;
   border-radius: 0.75rem;
   background: #f9fafb;
+  transition: all 0.3s ease;
+}
+
+.item-card:hover .item-image-container {
+  transform: scale(1.05);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
 }
 
 .item-image {
@@ -353,11 +438,12 @@ const getItemWord = (count: number) => {
   height: 120px;
   object-fit: cover;
   display: block;
-  transition: transform 0.3s ease;
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .item-card:hover .item-image {
-  transform: scale(1.05);
+  transform: scale(1.1);
+  filter: brightness(1.05);
 }
 
 .item-info {
@@ -378,6 +464,11 @@ const getItemWord = (count: number) => {
   color: #1f2937;
   line-height: 1.4;
   margin: 0;
+  transition: color 0.3s ease;
+}
+
+.item-card:hover .item-title {
+  color: #667eea;
 }
 
 .item-price {
@@ -388,6 +479,14 @@ const getItemWord = (count: number) => {
   -webkit-text-fill-color: transparent;
   background-clip: text;
   margin: 0;
+  transition: all 0.3s ease;
+}
+
+.item-card:hover .item-price {
+  background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 .item-options {
@@ -404,6 +503,12 @@ const getItemWord = (count: number) => {
   background: #f3f4f6;
   border-radius: 50px;
   font-size: 0.875rem;
+  transition: all 0.3s ease;
+}
+
+.item-card:hover .option-badge {
+  background: rgba(102, 126, 234, 0.1);
+  transform: translateY(-1px);
 }
 
 .option-label {
@@ -444,8 +549,18 @@ const getItemWord = (count: number) => {
   padding: 0.25rem;
   border-radius: 50px;
   border: 2px solid #e5e7eb;
+  transition: all 0.3s ease;
 }
 
+.item-card:hover .quantity-controls {
+  border-color: #667eea;
+  background: white;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.1);
+}
+
+/* ==================== */
+/* QUANTITY BUTTONS HOVER EFFECTS */
+/* ==================== */
 .quantity-btn {
   width: 2.5rem;
   height: 2.5rem;
@@ -459,19 +574,48 @@ const getItemWord = (count: number) => {
   font-size: 1.25rem;
   font-weight: 700;
   cursor: pointer;
-  transition: all 0.2s ease;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  position: relative;
+  overflow: hidden;
+}
+
+.quantity-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(102, 126, 234, 0.1), transparent);
+  transition: left 0.5s ease;
+}
+
+.quantity-btn:hover:not(:disabled)::before {
+  left: 100%;
 }
 
 .quantity-btn:hover:not(:disabled) {
   background: #667eea;
   color: white;
-  transform: scale(1.1);
+  transform: scale(1.15);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.quantity-btn:active:not(:disabled) {
+  transform: scale(1.05);
+  transition-duration: 0.1s;
 }
 
 .quantity-btn:disabled {
   opacity: 0.3;
   cursor: not-allowed;
+  transform: none;
+}
+
+.quantity-btn:focus-visible {
+  outline: 3px solid #667eea;
+  outline-offset: 2px;
 }
 
 .quantity {
@@ -480,6 +624,11 @@ const getItemWord = (count: number) => {
   font-weight: 700;
   font-size: 1.125rem;
   color: #1f2937;
+  transition: color 0.3s ease;
+}
+
+.item-card:hover .quantity {
+  color: #667eea;
 }
 
 .item-total {
@@ -499,8 +648,17 @@ const getItemWord = (count: number) => {
   font-size: 1.25rem;
   font-weight: 800;
   color: #10b981;
+  transition: all 0.3s ease;
 }
 
+.item-card:hover .total-price {
+  transform: scale(1.1);
+  text-shadow: 0 2px 4px rgba(16, 185, 129, 0.2);
+}
+
+/* ==================== */
+/* REMOVE BUTTON HOVER EFFECTS */
+/* ==================== */
 .remove-btn {
   display: flex;
   align-items: center;
@@ -513,19 +671,53 @@ const getItemWord = (count: number) => {
   cursor: pointer;
   font-weight: 600;
   font-size: 0.875rem;
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.remove-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(239, 68, 68, 0.1), transparent);
+  transition: left 0.5s ease;
+}
+
+.remove-btn:hover::before {
+  left: 100%;
 }
 
 .remove-btn:hover {
   background: #ef4444;
   color: white;
   border-color: #ef4444;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
+  transform: translateY(-3px) scale(1.05);
+  box-shadow:
+    0 6px 20px rgba(239, 68, 68, 0.3),
+    0 0 0 2px rgba(239, 68, 68, 0.1);
+}
+
+.remove-btn:active {
+  transform: translateY(-1px) scale(1.02);
+  transition-duration: 0.1s;
+}
+
+.remove-btn:focus-visible {
+  outline: 3px solid #ef4444;
+  outline-offset: 2px;
 }
 
 .remove-icon {
   font-size: 1rem;
+  transition: transform 0.3s ease;
+}
+
+.remove-btn:hover .remove-icon {
+  transform: scale(1.2) rotate(8deg);
 }
 
 .cart-summary-container {
@@ -538,6 +730,12 @@ const getItemWord = (count: number) => {
   border-radius: 1rem;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
   padding: 2rem;
+  transition: all 0.3s ease;
+}
+
+.cart-summary:hover {
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+  transform: translateY(-2px);
 }
 
 .summary-title {
@@ -556,17 +754,35 @@ const getItemWord = (count: number) => {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 1rem;
+  padding: 0.5rem 0;
+  transition: all 0.3s ease;
+}
+
+.summary-row:hover {
+  background: rgba(102, 126, 234, 0.05);
+  border-radius: 0.5rem;
+  padding: 0.5rem;
 }
 
 .summary-label {
   color: #6b7280;
   font-size: 1rem;
+  transition: color 0.3s ease;
+}
+
+.summary-row:hover .summary-label {
+  color: #667eea;
 }
 
 .summary-value {
   font-weight: 600;
   color: #1f2937;
   font-size: 1rem;
+  transition: color 0.3s ease;
+}
+
+.summary-row:hover .summary-value {
+  color: #667eea;
 }
 
 .summary-value.free {
@@ -578,6 +794,11 @@ const getItemWord = (count: number) => {
   height: 2px;
   background: linear-gradient(90deg, transparent, #e5e7eb, transparent);
   margin: 1rem 0;
+  transition: all 0.3s ease;
+}
+
+.cart-summary:hover .summary-divider {
+  background: linear-gradient(90deg, transparent, #667eea, transparent);
 }
 
 .summary-total {
@@ -588,6 +809,12 @@ const getItemWord = (count: number) => {
   background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
   border-radius: 0.75rem;
   margin-bottom: 1.5rem;
+  transition: all 0.3s ease;
+}
+
+.cart-summary:hover .summary-total {
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+  transform: scale(1.02);
 }
 
 .total-label {
@@ -603,8 +830,19 @@ const getItemWord = (count: number) => {
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+  transition: all 0.3s ease;
+}
+.cart-summary:hover .total-value {
+  background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
+
+/* ==================== */
+/* CHECKOUT BUTTON HOVER EFFECTS */
+/* ==================== */
 .checkout-btn {
   width: 100%;
   display: flex;
@@ -621,18 +859,56 @@ const getItemWord = (count: number) => {
   cursor: pointer;
   margin-bottom: 0.75rem;
   box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.checkout-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.6s ease;
+}
+
+.checkout-btn:hover::before {
+  left: 100%;
 }
 
 .checkout-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 25px rgba(16, 185, 129, 0.4);
+  transform: translateY(-3px) scale(1.02);
+  box-shadow:
+    0 8px 25px rgba(16, 185, 129, 0.4),
+    0 0 0 2px rgba(16, 185, 129, 0.1);
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+}
+
+.checkout-btn:active {
+  transform: translateY(-1px) scale(1.01);
+  transition-duration: 0.1s;
+}
+
+.checkout-btn:focus-visible {
+  outline: 3px solid #10b981;
+  outline-offset: 2px;
 }
 
 .checkout-icon {
   font-size: 1.5rem;
+  transition: transform 0.3s ease;
 }
 
+.checkout-btn:hover .checkout-icon {
+  transform: scale(1.2) rotate(-5deg);
+}
+
+/* ==================== */
+/* CLEAR BUTTON HOVER EFFECTS */
+/* ==================== */
 .clear-btn {
   width: 100%;
   display: flex;
@@ -646,61 +922,78 @@ const getItemWord = (count: number) => {
   border-radius: 0.75rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.clear-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(107, 114, 128, 0.05), transparent);
+  transition: left 0.6s ease;
+}
+
+.clear-btn:hover::before {
+  left: 100%;
 }
 
 .clear-btn:hover {
   background: #f9fafb;
   border-color: #d1d5db;
   color: #374151;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.clear-btn:active {
+  transform: translateY(0);
+  transition-duration: 0.1s;
+}
+
+.clear-btn:focus-visible {
+  outline: 3px solid #6b7280;
+  outline-offset: 2px;
 }
 
 .clear-icon {
   font-size: 1.125rem;
+  transition: transform 0.3s ease;
 }
 
-.security-badge {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  margin-top: 1.5rem;
-  padding: 0.75rem;
-  background: #f0fdf4;
-  border: 1px solid #86efac;
-  border-radius: 0.5rem;
-  color: #16a34a;
+.clear-btn:hover .clear-icon {
+  transform: scale(1.1) rotate(-5deg);
 }
 
-.badge-icon {
-  font-size: 1.125rem;
-}
-
-.badge-text {
-  font-weight: 600;
-  font-size: 0.875rem;
-}
-
-/* Анімації для transition-group */
+/* ==================== */
+/* TRANSITION ANIMATIONS */
+/* ==================== */
 .cart-item-enter-active,
 .cart-item-leave-active {
-  transition: all 0.5s ease;
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .cart-item-enter-from {
   opacity: 0;
-  transform: translateX(-30px);
+  transform: translateX(-30px) scale(0.9);
 }
 
 .cart-item-leave-to {
   opacity: 0;
-  transform: translateX(30px);
+  transform: translateX(30px) scale(0.8);
 }
 
 .cart-item-move {
   transition: transform 0.5s ease;
 }
 
+/* ==================== */
+/* RESPONSIVE DESIGN */
+/* ==================== */
 @media (max-width: 1024px) {
   .cart-content {
     grid-template-columns: 1fr;
@@ -723,6 +1016,7 @@ const getItemWord = (count: number) => {
   .item-card {
     grid-template-columns: 1fr;
     text-align: center;
+    gap: 1rem;
   }
 
   .item-image-container {
@@ -737,6 +1031,15 @@ const getItemWord = (count: number) => {
   .remove-btn {
     width: 100%;
     justify-content: center;
+  }
+
+  /* Менш інтенсивні ефекти на мобільних */
+  .item-card:hover {
+    transform: translateY(-2px);
+  }
+
+  .quantity-btn:hover:not(:disabled) {
+    transform: scale(1.05);
   }
 }
 
@@ -765,5 +1068,24 @@ const getItemWord = (count: number) => {
     width: 100px;
     height: 100px;
   }
+
+  .checkout-btn:hover,
+  .clear-btn:hover {
+    transform: translateY(-2px);
+  }
+}
+
+/* ==================== */
+/* SMOOTH TRANSITIONS */
+/* ==================== */
+.shop-link,
+.item-card,
+.quantity-btn,
+.remove-btn,
+.checkout-btn,
+.clear-btn,
+.item-image,
+.cart-summary {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 </style>

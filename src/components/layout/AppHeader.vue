@@ -190,6 +190,7 @@ defineExpose({
           <span
             v-if="wishlistCount > 0"
             class="desktop-badge"
+            :class="{ 'pop': wishlistBadgePop }"
           >
             {{ wishlistCount }}
           </span>
@@ -200,6 +201,7 @@ defineExpose({
           <span
             v-if="cartCount > 0"
             class="desktop-badge"
+            :class="{ 'pop': cartBadgePop }"
           >
             {{ cartCount }}
           </span>
@@ -287,7 +289,9 @@ defineExpose({
   margin: 0 auto;
 }
 
-/* Logo стилі */
+/* ==================== */
+/* ЛОГОТИП - HOVER ЕФЕКТ */
+/* ==================== */
 .logo {
   display: flex;
   align-items: center;
@@ -295,17 +299,21 @@ defineExpose({
   font-size: 1.75rem;
   font-weight: 800;
   text-decoration: none;
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
+  border-radius: 12px;
+  padding: 0.5rem;
+  margin: -0.5rem;
 }
 
 .logo-icon {
   font-size: 1.5rem;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
-  background-clip: text;
   animation: rotate-icon 4s ease-in-out infinite;
+  transition: transform 0.3s ease;
 }
 
 @keyframes rotate-icon {
@@ -315,22 +323,48 @@ defineExpose({
 
 .logo-text {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
-  background-clip: text;
   letter-spacing: 0.5px;
+  transition: all 0.3s ease;
 }
 
+/* Hover ефект для логотипу */
 .logo:hover {
   transform: translateY(-2px);
+  background: rgba(102, 126, 234, 0.05);
 }
 
-/* Desktop навігація */
+.logo:hover .logo-icon {
+  animation-duration: 2s;
+  transform: scale(1.1);
+}
+
+.logo:hover .logo-text {
+  background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Focus state для доступності */
+.logo:focus-visible {
+  outline: 3px solid #667eea;
+  outline-offset: 4px;
+  border-radius: 12px;
+}
+
+/* ==================== */
+/* DESKTOP НАВІГАЦІЯ */
+/* ==================== */
 .nav-links-desktop {
   display: none;
 }
 
-/* Іконки */
+/* ==================== */
+/* ІКОНКИ ТА КНОПКИ */
+/* ==================== */
 .nav-icons {
   display: flex;
   align-items: center;
@@ -339,7 +373,9 @@ defineExpose({
 
 .icon-link {
   text-decoration: none;
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 12px;
+  padding: 4px;
 }
 
 .icon-wrapper {
@@ -356,10 +392,11 @@ defineExpose({
   border: 2px solid transparent;
 }
 
+/* Hover ефект для іконок */
 .icon-link:hover .icon-wrapper {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
-  transform: translateY(-3px);
+  transform: translateY(-3px) scale(1.05);
   box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
 }
 
@@ -371,9 +408,24 @@ defineExpose({
 .icon-link:hover .profile-wrapper {
   background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
   box-shadow: 0 8px 20px rgba(118, 75, 162, 0.4);
+  transform: translateY(-3px) scale(1.05);
 }
 
-/* Badge стилі */
+/* Focus state для іконок */
+.icon-link:focus-visible {
+  outline: 3px solid #667eea;
+  outline-offset: 2px;
+  border-radius: 14px;
+}
+
+.icon-link:focus-visible .icon-wrapper {
+  outline: 2px solid white;
+  outline-offset: 2px;
+}
+
+/* ==================== */
+/* BADGE СТИЛІ */
+/* ==================== */
 .badge {
   position: absolute;
   top: -6px;
@@ -423,6 +475,11 @@ defineExpose({
   justify-content: center;
   align-items: center;
   margin-left: 8px;
+  transition: all 0.3s ease;
+}
+
+.desktop-badge.pop {
+  animation: pop-animation 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 /* Mobile badge */
@@ -439,21 +496,26 @@ defineExpose({
   justify-content: center;
   align-items: center;
   margin-left: auto;
+  transition: all 0.3s ease;
 }
 
-/* Гамбургер-меню */
+/* ==================== */
+/* ГАМБУРГЕР-МЕНЮ */
+/* ==================== */
 .mobile-menu-button {
   display: flex;
   flex-direction: column;
   justify-content: space-around;
-  width: 28px;
-  height: 28px;
+  width: 32px;
+  height: 32px;
   background: transparent;
   border: none;
   cursor: pointer;
   padding: 0;
   z-index: 1002;
   position: relative;
+  border-radius: 8px;
+  transition: all 0.3s ease;
 }
 
 .mobile-menu-button span {
@@ -463,6 +525,16 @@ defineExpose({
   border-radius: 10px;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
+}
+
+/* Hover ефект для кнопки меню */
+.mobile-menu-button:hover {
+  background: rgba(102, 126, 234, 0.1);
+  transform: scale(1.05);
+}
+
+.mobile-menu-button:hover span {
+  background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
 }
 
 .mobile-menu-button.is-active span:nth-child(1) {
@@ -478,7 +550,17 @@ defineExpose({
   transform: rotate(-45deg) translate(7px, -7px);
 }
 
-/* Мобільне меню */
+/* Focus state для кнопки меню */
+.mobile-menu-button:focus-visible {
+  outline: 3px solid #764ba2;
+  outline-offset: 4px;
+  border-radius: 8px;
+  background: rgba(102, 126, 234, 0.1);
+}
+
+/* ==================== */
+/* МОБІЛЬНЕ МЕНЮ */
+/* ==================== */
 .mobile-menu {
   position: fixed;
   top: 0;
@@ -497,7 +579,7 @@ defineExpose({
 .mobile-menu-content {
   display: flex;
   flex-direction: column;
-  gap: 2rem;
+  gap: 1.5rem;
   padding: 2rem;
   width: 100%;
   max-width: 400px;
@@ -509,32 +591,67 @@ defineExpose({
   gap: 1.5rem;
   color: white;
   text-decoration: none;
-  font-size: 2rem;
-  font-weight: 700;
-  padding: 1.5rem;
+  font-size: 1.5rem;
+  font-weight: 600;
+  padding: 1.25rem 1.5rem;
   background: rgba(255, 255, 255, 0.1);
   border-radius: 1rem;
   backdrop-filter: blur(10px);
   border: 2px solid rgba(255, 255, 255, 0.2);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   transform: translateY(0);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Hover ефект для мобільних посилань */
+.mobile-nav-link::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s ease;
+}
+
+.mobile-nav-link:hover::before {
+  left: 100%;
 }
 
 .mobile-nav-link:hover,
+.mobile-nav-link:focus-visible,
 .mobile-nav-link.router-link-active {
   background: rgba(255, 255, 255, 0.25);
   border-color: rgba(255, 255, 255, 0.5);
-  transform: translateX(10px);
+  transform: translateX(10px) scale(1.02);
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
 }
 
 .mobile-link-icon {
-  font-size: 2rem;
+  font-size: 1.75rem;
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+  transition: transform 0.3s ease;
+}
+
+.mobile-nav-link:hover .mobile-link-icon {
+  transform: scale(1.2);
 }
 
 .mobile-link-text {
   text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  transition: transform 0.3s ease;
+}
+
+.mobile-nav-link:hover .mobile-link-text {
+  transform: translateX(5px);
+}
+
+/* Focus state для мобільних посилань */
+.mobile-nav-link:focus-visible {
+  outline: 3px solid white;
+  outline-offset: 2px;
 }
 
 .mobile-menu-fade-enter-active,
@@ -552,7 +669,9 @@ defineExpose({
   transform: scale(1.05);
 }
 
-/* Desktop стилі */
+/* ==================== */
+/* DESKTOP СТИЛІ */
+/* ==================== */
 @media (min-width: 768px) {
   .nav-links-desktop {
     display: flex;
@@ -573,6 +692,7 @@ defineExpose({
     position: relative;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     background: transparent;
+    border: 2px solid transparent;
   }
 
   .link-icon {
@@ -597,26 +717,44 @@ defineExpose({
     transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
+  /* Hover ефект для desktop навігації */
   .nav-link:hover {
     color: #667eea;
     background: rgba(102, 126, 234, 0.08);
+    border-color: rgba(102, 126, 234, 0.2);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.15);
   }
 
   .nav-link:hover .link-icon {
-    transform: scale(1.2);
+    transform: scale(1.2) translateY(-1px);
   }
 
   .nav-link:hover .link-text::after {
     transform: scaleX(1);
   }
 
+  .nav-link:hover .desktop-badge {
+    transform: scale(1.1);
+    box-shadow: 0 4px 12px rgba(244, 63, 94, 0.3);
+  }
+
   .nav-link.router-link-active {
     color: #667eea;
     background: rgba(102, 126, 234, 0.12);
+    border-color: rgba(102, 126, 234, 0.3);
   }
 
   .nav-link.router-link-active .link-text::after {
     transform: scaleX(1);
+  }
+
+  /* Focus state для desktop навігації */
+  .nav-link:focus-visible {
+    outline: 3px solid #667eea;
+    outline-offset: 2px;
+    background: rgba(102, 126, 234, 0.1);
+    border-color: #667eea;
   }
 
   .nav-icons {
@@ -640,5 +778,24 @@ defineExpose({
   .nav-link {
     padding: 0.875rem 1.5rem;
   }
+}
+
+/* ==================== */
+/* СПІЛЬНІ TRANSITION СТИЛІ */
+/* ==================== */
+.logo,
+.nav-link,
+.icon-link,
+.mobile-menu-button,
+.mobile-nav-link {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Плавні трансформації */
+.logo:hover,
+.nav-link:hover,
+.icon-link:hover,
+.mobile-nav-link:hover {
+  transition-duration: 0.2s;
 }
 </style>
