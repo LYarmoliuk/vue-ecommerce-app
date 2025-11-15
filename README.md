@@ -6,9 +6,9 @@ Vue 3 застосунок інтернет-магазину одягу LINO з 
 ## 👥 Команда
 | Роль | ПІБ | Група | GitHub |
 |------|-----|-------|---------|
-| Team Lead | Ярмолюк Людмила | ХХ-ХХ | [github.com/LYarmoliuk](https://github.com/LYarmoliuk) |
-| Developer 1 (UI/UX) | Лазарєв Владислав | ХХ-ХХ | [github.com/Vlad8800](https://github.com/Vlad8800) |
-| Developer 2 (Logic/API) | Загребенюк Богдан | ХХ-ХХ | [github.com/booooooo76](https://github.com/booooooo76) |
+| Team Lead | Ярмолюк Людмила | 345 | [github.com/LYarmoliuk](https://github.com/LYarmoliuk) |
+| Developer 1 (UI/UX) | Сусла Владислав | 345 | [github.com/Vlad8800](https://github.com/Vlad8800) |
+| Developer 2 (Logic/API) | Загребенюк Богдан | 345 | [github.com/booooooo76](https://github.com/booooooo76) |
 
 ## 🛠️ Використані технології
 - **Frontend**: Vue 3 (Composition API), TypeScript, Pinia, Vue Router
