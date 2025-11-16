@@ -2,6 +2,7 @@
 import { RouterView } from 'vue-router'
 import AppHeader from '@/components/layout/AppHeader.vue'
 import AppFooter from '@/components/layout/AppFooter.vue'
+import { type RouteLocationNormalized } from 'vue-router'
 </script>
 
 <template>
@@ -273,7 +274,7 @@ export default {
       // Scroll to top on route change
       window.scrollTo({ top: 0, behavior: 'smooth' })
     },
-    getTransitionName(route: any) {
+    getTransitionName(route: RouteLocationNormalized) {
       // Ensure we always return a string for the transition name
       if (route && route.meta && typeof route.meta.transition === 'string') {
         return route.meta.transition
