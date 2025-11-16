@@ -4,11 +4,11 @@
 Vue 3 застосунок інтернет-магазину одягу LINO з каталогом товарів, фільтрами, кошиком і списком улюблених. Реалізовано через Composition API, Pinia, Vue Router та TypeScript.
 ---
 ## Команда
-| Роль                    | ПІБ                | Група | GitHub                                                 |
-|-------------------------|--------------------|-------|--------------------------------------------------------|
-| Team Lead               | Ярмолюк Людмила    | 345   | [github.com/LYarmoliuk](https://github.com/LYarmoliuk) |
-| Developer 1 (UI/UX)     | Сусла Владислав    | 345   | [github.com/Vlad8800](https://github.com/Vlad8800)     |
-| Developer 2 (Logic/API) | Загребенюк Богдан  | 345   | [github.com/booooooo76](https://github.com/booooooo76) |
+| Роль                    | ПІБ                | Група   | GitHub                                                 |
+|-------------------------|--------------------|---------|--------------------------------------------------------|
+| Team Lead               | Ярмолюк Людмила    | 343-5   | [github.com/LYarmoliuk](https://github.com/LYarmoliuk) |
+| Developer 1 (UI/UX)     | Сусла Владислав    | 343-5   | [github.com/Vlad8800](https://github.com/Vlad8800)     |
+| Developer 2 (Logic/API) | Загребенюк Богдан  | 343-5   | [github.com/booooooo76](https://github.com/booooooo76) |
 ---
 ## Використані технології
 - **Frontend**: Vue 3 (Composition API), TypeScript, Pinia, Vue Router
