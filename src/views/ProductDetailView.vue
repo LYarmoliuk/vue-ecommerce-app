@@ -81,14 +81,14 @@
             <h2 id="gallery-heading" class="sr-only">Галерея зображень товару</h2>
             <div class="main-image">
               <img
-                :src="currentImage"
-                :alt="`Основне зображення товару: ${product.title}`"
-                class="product-main-image"
-                @error="handleImageError"
-                loading="eager"
-                width="600"
-                height="500"
-              />
+  :src="currentImage"
+  :alt="`Основне зображення товару: ${product.title}`"
+  class="product-main-image"
+  @error="handleImageError($event, 'main')"
+  loading="eager"
+  width="600"
+  height="500"
+/>
             </div>
             <div class="image-thumbnails" role="list" aria-label="Мініатюри зображень">
               <button
@@ -105,12 +105,13 @@
                 tabindex="0"
               >
                 <img
-                  :src="image"
-                  :alt="`${product.title} - мініатюра ${index + 1}`"
-                  width="80"
-                  height="80"
-                  loading="lazy"
-                />
+  :src="image"
+  :alt="`${product.title} - мініатюра ${index + 1}`"
+  width="80"
+  height="80"
+  loading="lazy"
+  @error="handleImageError($event, 'thumbnail')"
+/>
               </button>
             </div>
           </section>
@@ -272,9 +273,16 @@ const toggleFavorite = () => {
   }
 };
 
-const handleImageError = (event: Event) => {
+const handleImageError = (event: Event, imageType: 'main' | 'thumbnail' = 'main') => {
   const target = event.target as HTMLImageElement;
-  target.src = 'https://via.placeholder.com/600x500/cccccc/969696?text=Зображення+недоступне';
+
+  // Різні placeholder для різних типів зображень
+  if (imageType === 'main') {
+    target.src = 'https://via.placeholder.com/600x500/cccccc/969696?text=Зображення+недоступне';
+  } else {
+    target.src = 'https://via.placeholder.com/80x80/cccccc/969696?text=Фото';
+  }
+
   target.alt = 'Зображення товару недоступне';
 };
 

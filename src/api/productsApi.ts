@@ -314,12 +314,18 @@ export const getProductGallery = async (productId: number): Promise<string[]> =>
     return [];
   }
 
+  // Якщо є галерея - повертаємо її, інакше створюємо з основного зображення
+  if (mainProduct.gallery && mainProduct.gallery.length > 0) {
+    return mainProduct.gallery;
+  }
+
+  // Запасний варіант - створюємо різні розміри основного зображення
   return [
     mainProduct.image,
-    mainProduct.image.replace('400', '401'),
-    mainProduct.image.replace('400', '402'),
-    mainProduct.image.replace('400', '403'),
-  ];
+    mainProduct.image.replace('1200x', '800x'),
+    mainProduct.image.replace('1200x', '600x'),
+    mainProduct.image.replace('1200x', '400x')
+  ].filter(Boolean);
 };
 
 /**
