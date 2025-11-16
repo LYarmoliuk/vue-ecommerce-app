@@ -20,19 +20,19 @@ Vue 3 застосунок інтернет-магазину одягу LINO з 
 ---
 ## Як запустити проєкт
 ```bash
-# Клонувати репозиторій
+Клонувати репозиторій
 git clone https://github.com/your-username/vue-ecommerce-app.git
 cd vue-ecommerce-app
 
-# Встановити залежності
+Встановити залежності
 npm install
 npm install vue-router 
 npm install --save-dev @vue/tsconfig @types/node
 
-# Запустити в режимі розробки
+Запустити в режимі розробки
 npm run dev
 
-# Білд для продакшн
+Білд для продакшн
 npm run build
 npm run preview
 
