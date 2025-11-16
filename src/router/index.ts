@@ -33,7 +33,7 @@ const router = createRouter({
       name: 'home',
       component: HomeView,
       meta: {
-        title: 'E-Shop - Головна'
+        title: 'LINO - Головна'
       }
     },
     {
@@ -42,7 +42,7 @@ const router = createRouter({
       component: ProductDetailView,
       props: true,
       meta: {
-        title: 'E-Shop - Деталі товару'
+        title: 'LINO - Деталі товару'
       }
     },
     {
@@ -50,7 +50,7 @@ const router = createRouter({
       name: 'cart',
       component: CartView,
       meta: {
-        title: 'E-Shop - Кошик'
+        title: 'LINO - Кошик'
       }
     },
     {
@@ -58,7 +58,7 @@ const router = createRouter({
       name: 'wishlist',
       component: WishlistView,
       meta: {
-        title: 'E-Shop - Список бажань'
+        title: 'LINO - Список бажань'
       }
     },
     {
@@ -66,7 +66,7 @@ const router = createRouter({
       name: 'about',
       component: () => import('../views/AboutView.vue'),
       meta: {
-        title: 'E-Shop - Про нас'
+        title: 'LINO - Про нас'
       }
     },
     {
@@ -74,7 +74,7 @@ const router = createRouter({
       name: '404',
       component: NotFoundView,
       meta: {
-        title: 'E-Shop - Сторінку не знайдено'
+        title: 'LINO - Сторінку не знайдено'
       }
     },
     {
