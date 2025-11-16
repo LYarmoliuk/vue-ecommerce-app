@@ -54,6 +54,15 @@ const router = createRouter({
       }
     },
     {
+  path: '/checkout',
+  name: 'checkout',
+  component: () => import('../views/CheckoutView.vue'),
+  meta: {
+    title: 'LINO - Оформлення замовлення'
+  }
+},
+
+    {
       path: '/wishlist',
       name: 'wishlist',
       component: WishlistView,
@@ -77,6 +86,7 @@ const router = createRouter({
         title: 'LINO - Сторінку не знайдено'
       }
     },
+
     {
       path: '/:pathMatch(.*)*', // Перехоплюємо всі невідомі маршрути
       redirect: '/404'

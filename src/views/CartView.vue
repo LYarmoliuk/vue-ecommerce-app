@@ -6,27 +6,31 @@
           <span class="cart-icon">🛒</span>
           Кошик
         </h1>
-        <p class="subtitle" v-if="cartStore.items.length > 0">
+
+        <p v-if="cartStore.items.length > 0" class="subtitle">
           {{ cartStore.totalItems }} {{ getItemWord(cartStore.totalItems) }}
         </p>
       </div>
     </div>
 
+    <!-- Порожній кошик -->
     <div v-if="cartStore.items.length === 0" class="empty-cart">
       <div class="empty-content">
         <div class="empty-icon">🛒</div>
         <h2 class="empty-title">Кошик порожній</h2>
-        <p class="empty-description">Додайте товари до кошика, щоб розпочати покупки</p>
+
         <RouterLink to="/" class="shop-link">
-          <span class="link-icon">🛍️</span>
-          Почати покупки
+          🛍️ Почати покупки
         </RouterLink>
       </div>
     </div>
 
+    <!-- Є товари -->
     <div v-else class="cart-content">
-      <!-- Список товарів -->
+
+      <!-- Ліва частина -->
       <div class="cart-items-container">
+
         <div class="items-header">
           <h2>Ваші товари</h2>
         </div>
@@ -38,71 +42,37 @@
             class="cart-item"
           >
             <div class="item-card">
+
               <div class="item-image-container">
-                <img
-                  :src="item.product.image"
-                  :alt="item.product.title"
-                  class="item-image"
-                  loading="lazy"
-                >
+                <img :src="item.product.image" class="item-image" />
               </div>
 
               <div class="item-info">
-                <div class="item-main">
-                  <h3 class="item-title">{{ item.product.title }}</h3>
-                  <p class="item-price">${{ item.product.price }}</p>
-                </div>
-
-                <div class="item-options">
-                  <div v-if="item.selectedSize" class="option-badge">
-                    <span class="option-label">Розмір:</span>
-                    <span class="option-value">{{ item.selectedSize }}</span>
-                  </div>
-
-                  <div v-if="item.selectedColor" class="option-badge">
-                    <span class="option-label">Колір:</span>
-                    <span class="option-value">{{ item.selectedColor }}</span>
-                  </div>
-                </div>
+                <h3 class="item-title">{{ item.product.title }}</h3>
+                <p class="item-price">${{ item.product.price }}</p>
               </div>
 
               <div class="item-actions">
-                <div class="quantity-section">
-                  <label class="quantity-label">Кількість:</label>
-                  <div class="quantity-controls">
-                    <button
-                      @click="cartStore.decrementQuantity(item.product.id, item.selectedSize, item.selectedColor)"
-                      class="quantity-btn"
-                      :disabled="item.quantity <= 1"
-                      :aria-label="`Зменшити кількість ${item.product.title}`"
-                    >
-                      <span>−</span>
-                    </button>
+                <div class="quantity-controls">
+                  <button
+                    class="quantity-btn"
+                    @click="cartStore.decrementQuantity(item.product.id, item.selectedSize, item.selectedColor)"
+                    :disabled="item.quantity <= 1"
+                  >−</button>
 
-                    <span class="quantity">{{ item.quantity }}</span>
+                  <span class="quantity">{{ item.quantity }}</span>
 
-                    <button
-                      @click="cartStore.incrementQuantity(item.product.id, item.selectedSize, item.selectedColor)"
-                      class="quantity-btn"
-                      :aria-label="`Збільшити кількість ${item.product.title}`"
-                    >
-                      <span>+</span>
-                    </button>
-                  </div>
-                </div>
-
-                <div class="item-total">
-                  <span class="total-label">Сума:</span>
-                  <span class="total-price">${{ (item.product.price * item.quantity).toFixed(2) }}</span>
+                  <button
+                    class="quantity-btn"
+                    @click="cartStore.incrementQuantity(item.product.id, item.selectedSize, item.selectedColor)"
+                  >+</button>
                 </div>
 
                 <button
-                  @click="cartStore.removeFromCart(item.product.id, item.selectedSize, item.selectedColor)"
                   class="remove-btn"
-                  :aria-label="`Видалити ${item.product.title} з кошика`"
+                  @click="cartStore.removeFromCart(item.product.id, item.selectedSize, item.selectedColor)"
                 >
-                  <span class="remove-icon">🗑️</span>
-                  <span class="remove-text">Видалити</span>
+                  🗑️ Видалити
                 </button>
               </div>
             </div>
@@ -110,75 +80,75 @@
         </transition-group>
       </div>
 
-      <!-- Загальна сума -->
+      <!-- Права частина -->
       <div class="cart-summary-container">
         <div class="cart-summary">
+
           <h2 class="summary-title">Підсумок замовлення</h2>
 
           <div class="summary-details">
             <div class="summary-row">
-              <span class="summary-label">Товари ({{ cartStore.totalItems }}):</span>
-              <span class="summary-value">${{ cartStore.total.toFixed(2) }}</span>
+              <span>Товари ({{ cartStore.totalItems }}):</span>
+              <span>${{ cartStore.total.toFixed(2) }}</span>
             </div>
 
             <div class="summary-row">
-              <span class="summary-label">Доставка:</span>
-              <span class="summary-value free">Безкоштовно</span>
+              <span>Доставка:</span>
+              <span class="free">Безкоштовно</span>
             </div>
 
             <div class="summary-divider"></div>
 
             <div class="summary-total">
-              <span class="total-label">Всього:</span>
-              <span class="total-value">${{ cartStore.total.toFixed(2) }}</span>
+              <span>Всього:</span>
+              <span>${{ cartStore.total.toFixed(2) }}</span>
             </div>
           </div>
 
-          <button
-            class="checkout-btn"
-            :aria-label="`Оформити замовлення на суму $${cartStore.total.toFixed(2)}`"
-          >
-            <span class="checkout-icon">✓</span>
-            <span>Оформити замовлення</span>
+       <button class="checkout-btn" @click="$router.push('/checkout')">
+  ✓ Оформити замовлення
+</button>
+
+          <button class="clear-btn" @click="cartStore.clearCart()">
+            🗑️ Очистити кошик
           </button>
 
-          <button
-            @click="cartStore.clearCart()"
-            class="clear-btn"
-            aria-label="Очистити весь кошик"
-          >
-            <span class="clear-icon">🗑️</span>
-            <span>Очистити кошик</span>
-          </button>
         </div>
       </div>
+
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { useCartStore } from '@/stores/cart';
+import { ref } from "vue";
+import { RouterLink } from "vue-router";
+import CheckoutForm from "@/components/CheckoutForm.vue";
+import { useCartStore } from "@/stores/cart";
 
 const cartStore = useCartStore();
+const showCheckout = ref(false);
 
-const getItemWord = (count: number) => {
+function toggleCheckout() {
+  showCheckout.value = !showCheckout.value;
+}
+
+function getItemWord(count: number) {
   const lastDigit = count % 10;
   const lastTwoDigits = count % 100;
-
-  if (lastTwoDigits >= 11 && lastTwoDigits <= 14) {
-    return 'товарів';
-  }
-  if (lastDigit === 1) {
-    return 'товар';
-  }
-  if (lastDigit >= 2 && lastDigit <= 4) {
-    return 'товари';
-  }
-  return 'товарів';
-};
+  if (lastTwoDigits >= 11 && lastTwoDigits <= 14) return "товарів";
+  if (lastDigit === 1) return "товар";
+  if (lastDigit >= 2 && lastDigit <= 4) return "товари";
+  return "товарів";
+}
 </script>
 
 <style scoped>
+.cart-summary-container,
+.cart-summary {
+  overflow: visible !important;
+}
+
 .cart-view {
   min-height: 100vh;
   background: linear-gradient(135deg, #f5f7fa 0%, #e8ecf1 100%);
