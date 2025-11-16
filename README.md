@@ -18,6 +18,11 @@ Vue 3 застосунок інтернет-магазину одягу LINO з 
 - **Tools**: ESLint, Prettier, Vite
 - **Styling**: Custom CSS з responsive design
 ---
+Live Demo
+
+https://your-username.github.io/vue-ecommerce-app/
+
+---
 ## Як запустити проєкт
 ```bash
 Клонувати репозиторій
